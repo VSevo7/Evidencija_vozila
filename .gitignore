@@ -1,0 +1,32 @@
+# Build output
+bin/
+obj/
+out/
+
+# User-specific files
+*.user
+*.rsuser
+*.suo
+
+# VS Code
+.vscode/
+
+# Visual Studio
+.vs/
+
+# Rider
+.idea/
+
+# Logs
+*.log
+
+# NuGet
+packages/
+*.nupkg
+
+# ASP.NET Core local settings
+appsettings.Development.json
+
+# OS files
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,54 @@
+html {
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+body.app-shell {
+    background:
+        radial-gradient(circle at top left, rgba(13, 110, 253, 0.12), transparent 30%),
+        linear-gradient(180deg, #f4f7fb 0%, #eef2f7 100%);
+    min-height: 100vh;
+}
+
+.navbar-brand {
+    letter-spacing: 0.02em;
+}
+
+.card {
+    border: 0;
+    border-radius: 1rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #1d3557, #457b9d);
+    color: #fff;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.9;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.95rem 0.75rem;
+}
+
+.min-vh-75 {
+    min-height: 75vh;
+}
+
+.footer {
+    margin-top: 3rem;
+}

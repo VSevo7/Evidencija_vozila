@@ -1,0 +1,56 @@
+@model EvidencijaVozila.ViewModels.Orders.OrderDetailsViewModel
+@{
+    ViewData["Title"] = "Detalji naloga";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">Detalji naloga @Model.OrderNumber</h1>
+        <p class="text-muted mb-0">Pregled svih podataka o koristenju vozila.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Natrag</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Broj naloga</dt><dd class="col-sm-8">@Model.OrderNumber</dd>
+                    <dt class="col-sm-4">Vozilo</dt><dd class="col-sm-8">@Model.Vehicle</dd>
+                    <dt class="col-sm-4">Specifikacija</dt><dd class="col-sm-8">@Model.VehicleSpecs</dd>
+                    <dt class="col-sm-4">Vozac</dt><dd class="col-sm-8">@Model.Driver</dd>
+                    <dt class="col-sm-4">Jedinica</dt><dd class="col-sm-8">@Model.OrganizationalUnit</dd>
+                    <dt class="col-sm-4">Termin</dt><dd class="col-sm-8">@Model.DepartureAt.ToString("dd.MM.yyyy HH:mm") - @Model.ReturnAt.ToString("dd.MM.yyyy HH:mm")</dd>
+                    <dt class="col-sm-4">Sluzbeni put</dt><dd class="col-sm-8">@(Model.IsBusinessTrip ? "Da" : "Ne")</dd>
+                    <dt class="col-sm-4">Km prije</dt><dd class="col-sm-8">@Model.MileageBefore</dd>
+                    <dt class="col-sm-4">Km poslije</dt><dd class="col-sm-8">@(Model.MileageAfter?.ToString() ?? "-")</dd>
+                    <dt class="col-sm-4">Status</dt><dd class="col-sm-8"><span class="badge text-bg-@ViewHelpers.BadgeClass(Model.Status)">@Model.Status</span></dd>
+                    <dt class="col-sm-4">Kreirao</dt><dd class="col-sm-8">@Model.CreatedBy</dd>
+                    <dt class="col-sm-4">Napomena</dt><dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Note) ? "-" : Model.Note)</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Zakljucivanje naloga</h2>
+                @if (Model.Status == "Aktivan")
+                {
+                    <form asp-action="Complete" method="post">
+                        <input asp-for="CompleteOrder.OrderId" type="hidden" />
+                        <input asp-for="CompleteOrder.OrderNumber" type="hidden" />
+                        <div class="mb-3"><label asp-for="CompleteOrder.MileageAfter" class="form-label"></label><input asp-for="CompleteOrder.MileageAfter" class="form-control" /></div>
+                        <div class="mb-3"><label asp-for="CompleteOrder.Note" class="form-label"></label><textarea asp-for="CompleteOrder.Note" class="form-control" rows="3"></textarea></div>
+                        <button type="submit" class="btn btn-primary">Zavrsi nalog</button>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Nalog je vec zavrsen.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

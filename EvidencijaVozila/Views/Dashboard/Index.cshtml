@@ -1,0 +1,72 @@
+@model EvidencijaVozila.ViewModels.Dashboard.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">Dashboard</h1>
+        <p class="text-muted mb-0">Pregled stanja vozila, korisnika i naloga.</p>
+    </div>
+    @if (User.IsInRole(nameof(UserRole.Administrator)))
+    {
+        <a asp-controller="Orders" asp-action="Create" class="btn btn-primary">Novi nalog</a>
+    }
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card stat-card"><div class="card-body"><div class="stat-label">Ukupno vozila</div><div class="stat-value">@Model.TotalVehicles</div></div></div></div>
+    <div class="col-md-3"><div class="card stat-card"><div class="card-body"><div class="stat-label">Slobodna vozila</div><div class="stat-value">@Model.AvailableVehicles</div></div></div></div>
+    <div class="col-md-3"><div class="card stat-card"><div class="card-body"><div class="stat-label">Aktivni nalozi</div><div class="stat-value">@Model.ActiveOrders</div></div></div></div>
+    <div class="col-md-3"><div class="card stat-card"><div class="card-body"><div class="stat-label">Korisnici</div><div class="stat-value">@Model.TotalUsers</div></div></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Servisna upozorenja</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead><tr><th>Registracija</th><th>Vozilo</th><th>Km</th><th>Do servisa</th></tr></thead>
+                        <tbody>
+                        @foreach (var item in Model.ServiceAlerts)
+                        {
+                            <tr>
+                                <td>@item.RegistrationNumber</td>
+                                <td>@item.BrandModel</td>
+                                <td>@item.CurrentMileage</td>
+                                <td>@item.KmUntilService</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Zadnji nalozi</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead><tr><th>Broj</th><th>Vozilo</th><th>Vozac</th><th>Termin</th><th>Status</th></tr></thead>
+                        <tbody>
+                        @foreach (var order in Model.RecentOrders)
+                        {
+                            <tr>
+                                <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">@order.OrderNumber</a></td>
+                                <td>@order.Vehicle</td>
+                                <td>@order.Driver</td>
+                                <td>@order.DepartureAt.ToString("dd.MM.yyyy HH:mm")<br /><small>@order.ReturnAt.ToString("dd.MM.yyyy HH:mm")</small></td>
+                                <td><span class="badge text-bg-@ViewHelpers.BadgeClass(order.Status)">@order.Status</span></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

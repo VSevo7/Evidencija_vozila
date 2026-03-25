@@ -1,0 +1,19 @@
+@model EvidencijaVozila.Models.ErrorViewModel
+@{
+    ViewData["Title"] = "Pogreska";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-danger">
+            <div class="card-body p-4">
+                <h1 class="h3 mb-3">Dogodila se pogreska</h1>
+                <p class="text-muted mb-0">Provjeri konfiguraciju baze i pristup LocalDB instanci, pa ponovno pokreni aplikaciju.</p>
+                @if (Model.ShowRequestId)
+                {
+                    <p class="small text-muted mt-3 mb-0">Request ID: <code>@Model.RequestId</code></p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

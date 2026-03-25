@@ -1,0 +1,38 @@
+@model EvidencijaVozila.ViewModels.Orders.OrderFormViewModel
+@{
+    ViewData["Title"] = "Novi nalog";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">Novi nalog</h1>
+        <p class="text-muted mb-0">Kreiranje naloga uz automatsku provjeru dostupnosti vozila.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Natrag</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div class="row g-3">
+                <div class="col-md-4"><label asp-for="OrderNumber" class="form-label"></label><input asp-for="OrderNumber" class="form-control" /></div>
+                <div class="col-md-4"><label asp-for="VehicleId" class="form-label"></label><select asp-for="VehicleId" asp-items="Model.Vehicles" class="form-select"><option value="">Odaberi vozilo</option></select></div>
+                <div class="col-md-4"><label asp-for="DriverId" class="form-label"></label><select asp-for="DriverId" asp-items="Model.Drivers" class="form-select"><option value="">Odaberi vozaca</option></select></div>
+                <div class="col-md-4"><label asp-for="OrganizationalUnitId" class="form-label"></label><select asp-for="OrganizationalUnitId" asp-items="Model.OrganizationalUnits" class="form-select"><option value="">Odaberi jedinicu</option></select></div>
+                <div class="col-md-2"><div class="form-check mt-4 pt-2"><input asp-for="IsBusinessTrip" class="form-check-input" /><label asp-for="IsBusinessTrip" class="form-check-label"></label></div></div>
+                <div class="col-md-3"><label asp-for="DepartureAt" class="form-label"></label><input asp-for="DepartureAt" type="datetime-local" class="form-control" value="@Model.DepartureAt.ToString("yyyy-MM-ddTHH:mm")" /></div>
+                <div class="col-md-3"><label asp-for="ReturnAt" class="form-label"></label><input asp-for="ReturnAt" type="datetime-local" class="form-control" value="@Model.ReturnAt.ToString("yyyy-MM-ddTHH:mm")" /></div>
+                <div class="col-md-4"><label asp-for="MileageBefore" class="form-label"></label><input asp-for="MileageBefore" class="form-control" /></div>
+                <div class="col-md-8"><label asp-for="Note" class="form-label"></label><textarea asp-for="Note" class="form-control" rows="3"></textarea></div>
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Kreiraj nalog</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

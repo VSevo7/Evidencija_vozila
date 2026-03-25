@@ -1,0 +1,39 @@
+@model EvidencijaVozila.ViewModels.Users.UserFormViewModel
+@{
+    ViewData["Title"] = Model.Id.HasValue ? "Uredi korisnika" : "Dodaj korisnika";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">@ViewData["Title"]</h1>
+        <p class="text-muted mb-0">Unos osnovnih podataka i organizacijske pripadnosti.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Natrag</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form asp-action="@(Model.Id.HasValue ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="FirstName" class="form-label"></label><input asp-for="FirstName" class="form-control" /><span asp-validation-for="FirstName" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="LastName" class="form-label"></label><input asp-for="LastName" class="form-control" /><span asp-validation-for="LastName" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="Username" class="form-label"></label><input asp-for="Username" class="form-control" /><span asp-validation-for="Username" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control" /><span asp-validation-for="Password" class="text-danger small"></span></div>
+                <div class="col-md-3"><label asp-for="Role" class="form-label"></label><select asp-for="Role" asp-items="Html.GetEnumSelectList<UserRole>()" class="form-select"></select></div>
+                <div class="col-md-3"><label asp-for="Status" class="form-label"></label><select asp-for="Status" asp-items="Html.GetEnumSelectList<UserStatus>()" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="OrganizationalUnitId" class="form-label"></label><select asp-for="OrganizationalUnitId" asp-items="Model.OrganizationalUnits" class="form-select"><option value="">Odaberi</option></select></div>
+                <div class="col-md-4"><label asp-for="SectorId" class="form-label"></label><select asp-for="SectorId" asp-items="Model.Sectors" class="form-select"><option value="">Odaberi</option></select></div>
+                <div class="col-md-4"><label asp-for="ServiceDepartmentId" class="form-label"></label><select asp-for="ServiceDepartmentId" asp-items="Model.ServiceDepartments" class="form-select"><option value="">Odaberi</option></select></div>
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Spremi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
