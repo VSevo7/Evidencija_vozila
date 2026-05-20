@@ -47,8 +47,5 @@ public class Vehicle
     [Display(Name = "Status vozila")]
     public VehicleStatus Status { get; set; }
 
-    [Display(Name = "Aktivno")]
-    public bool IsActive { get; set; } = true;
-
     public ICollection<VehicleOrder> Orders { get; set; } = new List<VehicleOrder>();
 }

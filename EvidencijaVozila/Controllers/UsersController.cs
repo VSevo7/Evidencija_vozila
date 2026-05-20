@@ -16,9 +16,6 @@ public class UsersController(ApplicationDbContext context) : Controller
     {
         var users = await context.Users
             .AsNoTracking()
-            .Include(x => x.OrganizationalUnit)
-            .Include(x => x.Sector)
-            .Include(x => x.ServiceDepartment)
             .OrderBy(x => x.LastName)
             .ThenBy(x => x.FirstName)
             .Select(x => new UserIndexItemViewModel
@@ -56,7 +53,11 @@ public class UsersController(ApplicationDbContext context) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(UserFormViewModel model)
     {
-        var username = model.Username.Trim();
+        var firstName = InputNormalizer.NormalizeRequired(model.FirstName);
+        var lastName = InputNormalizer.NormalizeRequired(model.LastName);
+        var username = InputNormalizer.NormalizeRequired(model.Username);
+        var email = InputNormalizer.NormalizeRequired(model.Email);
+
         if (await context.Users.AnyAsync(x => x.Username == username))
         {
             ModelState.AddModelError(nameof(model.Username), "Korisničko ime već postoji.");
@@ -84,11 +85,11 @@ public class UsersController(ApplicationDbContext context) : Controller
 
         var user = new AppUser
         {
-            FirstName = model.FirstName.Trim(),
-            LastName = model.LastName.Trim(),
+            FirstName = firstName,
+            LastName = lastName,
             Username = username,
-            Email = model.Email.Trim(),
-            ContactPhone = NormalizeOptionalValue(model.ContactPhone),
+            Email = email,
+            ContactPhone = InputNormalizer.NormalizeOptional(model.ContactPhone),
             Role = model.Role,
             Status = model.Status,
             OrganizationalUnitId = model.OrganizationalUnitId,
@@ -157,7 +158,11 @@ public class UsersController(ApplicationDbContext context) : Controller
             return NotFound();
         }
 
-        var username = model.Username.Trim();
+        var firstName = InputNormalizer.NormalizeRequired(model.FirstName);
+        var lastName = InputNormalizer.NormalizeRequired(model.LastName);
+        var username = InputNormalizer.NormalizeRequired(model.Username);
+        var email = InputNormalizer.NormalizeRequired(model.Email);
+
         if (await context.Users.AnyAsync(x => x.Username == username && x.Id != id))
         {
             ModelState.AddModelError(nameof(model.Username), "Korisničko ime već postoji.");
@@ -192,11 +197,11 @@ public class UsersController(ApplicationDbContext context) : Controller
             return View("Form", model);
         }
 
-        user.FirstName = model.FirstName.Trim();
-        user.LastName = model.LastName.Trim();
+        user.FirstName = firstName;
+        user.LastName = lastName;
         user.Username = username;
-        user.Email = model.Email.Trim();
-        user.ContactPhone = NormalizeOptionalValue(model.ContactPhone);
+        user.Email = email;
+        user.ContactPhone = InputNormalizer.NormalizeOptional(model.ContactPhone);
         user.Role = model.Role;
         user.Status = model.Status;
         user.OrganizationalUnitId = model.OrganizationalUnitId;
@@ -284,17 +289,12 @@ public class UsersController(ApplicationDbContext context) : Controller
 
     private async Task<int?> ResolveServiceDepartmentIdAsync(UserFormViewModel model, int? sectorId)
     {
-        if (model.AssignmentType != UserAssignmentType.Sluzba)
+        if (model.AssignmentType != UserAssignmentType.Sluzba || !sectorId.HasValue)
         {
             return null;
         }
 
-        if (!sectorId.HasValue)
-        {
-            return null;
-        }
-
-        var serviceName = model.ServiceDepartmentName!.Trim();
+        var serviceName = InputNormalizer.NormalizeRequired(model.ServiceDepartmentName);
         var normalizedName = NormalizeName(serviceName);
         var matchingServices = await context.ServiceDepartments
             .Where(x =>
@@ -328,7 +328,8 @@ public class UsersController(ApplicationDbContext context) : Controller
 
     private async Task<int?> GetOrCreateSectorAsync(string sectorName, int organizationalUnitId, string fieldName)
     {
-        var normalizedName = NormalizeName(sectorName);
+        var trimmedSectorName = InputNormalizer.NormalizeRequired(sectorName);
+        var normalizedName = NormalizeName(trimmedSectorName);
         var matchingSectors = await context.Sectors
             .Where(x =>
                 x.OrganizationalUnitId == organizationalUnitId &&
@@ -350,7 +351,7 @@ public class UsersController(ApplicationDbContext context) : Controller
 
         var newSector = new Sector
         {
-            Name = sectorName.Trim(),
+            Name = trimmedSectorName,
             OrganizationalUnitId = organizationalUnitId
         };
 
@@ -360,7 +361,4 @@ public class UsersController(ApplicationDbContext context) : Controller
     }
 
     private static string NormalizeName(string value) => value.Trim().ToUpperInvariant();
-
-    private static string? NormalizeOptionalValue(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

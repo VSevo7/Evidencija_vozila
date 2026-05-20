@@ -2,12 +2,11 @@
 
 ASP.NET Core MVC aplikacija za internu evidenciju korisnika, službenih vozila i naloga za korištenje vozila.
 
-## Funkcionalnosti
+## Glavne funkcionalnosti
 
 - prijava i odjava korisnika
 - administracija korisnika
-- evidencija vozila
-- pregled detalja vozila
+- evidencija vozila i pregled detalja vozila
 - kreiranje i završavanje naloga
 - pretraga vozila po registracijskoj oznaci
 - pretraga naloga po broju naloga
@@ -25,7 +24,7 @@ Korisnike u sustav unosi administrator. Ne postoji samostalna registracija koris
 
 Veza prema bazi nalazi se u [appsettings.json](C:\Users\Korisnik\OneDrive\Radna povrsina\Nova mapa\EvidencijaVozila\appsettings.json).
 
-Projekt koristi EF Core migracije. Pri pokretanju aplikacije migracije se primjenjuju automatski.
+Projekt koristi EF Core migracije i primjenjuje ih automatski pri pokretanju aplikacije.
 
 Ako želiš potpuno praznu bazu za novi unos podataka, promijeni naziv baze u connection stringu ili obriši postojeću LocalDB bazu s tim nazivom.
 

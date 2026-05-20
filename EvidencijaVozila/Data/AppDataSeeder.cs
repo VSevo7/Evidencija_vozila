@@ -9,16 +9,23 @@ public static class AppDataSeeder
 {
     public static async Task SeedAsync(ApplicationDbContext context)
     {
+        var hasChanges = false;
+
         var unit = await context.OrganizationalUnits.FirstOrDefaultAsync();
         if (unit is null)
         {
             unit = new OrganizationalUnit { Name = "Ministarstvo unutarnjih poslova" };
             context.OrganizationalUnits.Add(unit);
-            await context.SaveChangesAsync();
+            hasChanges = true;
         }
         else if (unit.Name != "Ministarstvo unutarnjih poslova")
         {
             unit.Name = "Ministarstvo unutarnjih poslova";
+            hasChanges = true;
+        }
+
+        if (hasChanges)
+        {
             await context.SaveChangesAsync();
         }
 
@@ -32,6 +39,11 @@ public static class AppDataSeeder
             };
 
             context.Sectors.Add(adminSector);
+            await context.SaveChangesAsync();
+        }
+        else if (adminSector.OrganizationalUnitId != unit.Id)
+        {
+            adminSector.OrganizationalUnitId = unit.Id;
             await context.SaveChangesAsync();
         }
 

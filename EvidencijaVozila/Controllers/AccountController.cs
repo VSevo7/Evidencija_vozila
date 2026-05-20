@@ -35,7 +35,7 @@ public class AccountController(ApplicationDbContext context) : Controller
             return View(model);
         }
 
-        var username = model.Username.Trim();
+        var username = InputNormalizer.NormalizeRequired(model.Username);
         var user = await context.Users.FirstOrDefaultAsync(x => x.Username == username);
         if (user is null || user.Status != UserStatus.Aktivan)
         {

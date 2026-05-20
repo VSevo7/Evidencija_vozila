@@ -45,7 +45,7 @@
                 </div>
                 <div class="col-md-3">
                     <label asp-for="CurrentMileage" class="form-label"></label>
-                    <input asp-for="CurrentMileage" class="form-control" />
+                    <input asp-for="CurrentMileage" type="number" min="0" class="form-control" />
                 </div>
                 <div class="col-md-4">
                     <label asp-for="FuelType" class="form-label"></label>
@@ -57,7 +57,7 @@
                 </div>
                 <div class="col-md-4">
                     <label asp-for="PurchasePrice" class="form-label"></label>
-                    <input asp-for="PurchasePrice" asp-format="{0:0}" class="form-control" />
+                    <input asp-for="PurchasePrice" asp-format="{0:0}" type="number" min="0" step="1" class="form-control" />
                 </div>
                 <div class="col-md-6">
                     <label asp-for="Status" class="form-label"></label>

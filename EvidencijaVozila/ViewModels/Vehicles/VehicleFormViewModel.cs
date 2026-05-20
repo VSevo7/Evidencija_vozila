@@ -45,7 +45,4 @@ public class VehicleFormViewModel
     [Required]
     [Display(Name = "Status vozila")]
     public VehicleStatus Status { get; set; }
-
-    [Display(Name = "Aktivno")]
-    public bool IsActive { get; set; } = true;
 }

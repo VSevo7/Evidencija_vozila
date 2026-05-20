@@ -21,17 +21,11 @@ public class OrdersController(ApplicationDbContext context) : Controller
 
         var query = context.VehicleOrders
             .AsNoTracking()
-            .Include(x => x.Vehicle)
-            .Include(x => x.Driver)
-                .ThenInclude(x => x!.Sector)
-            .Include(x => x.Driver)
-                .ThenInclude(x => x!.ServiceDepartment)
-            .Include(x => x.OrganizationalUnit)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(normalizedOrderNumber))
         {
-            query = query.Where(x => x.OrderNumber.Trim().ToUpper() == normalizedOrderNumber);
+            query = query.Where(x => x.OrderNumber == normalizedOrderNumber);
         }
 
         var orders = await query
@@ -42,7 +36,6 @@ public class OrdersController(ApplicationDbContext context) : Controller
                 OrderNumber = x.OrderNumber,
                 Vehicle = $"{x.Vehicle!.RegistrationNumber} / {x.Vehicle.BrandModel}",
                 Driver = x.Driver!.FullName,
-                OrganizationalUnit = x.OrganizationalUnit!.Name,
                 Sector = x.Driver.Sector != null ? x.Driver.Sector.Name : "-",
                 ServiceDepartment = x.Driver.ServiceDepartment != null ? x.Driver.ServiceDepartment.Name : "-",
                 DepartureAt = x.DepartureAt,
@@ -86,7 +79,8 @@ public class OrdersController(ApplicationDbContext context) : Controller
         var vehicle = await context.Vehicles.FindAsync(model.VehicleId);
         if (vehicle is null)
         {
-            return NotFound();
+            ModelState.AddModelError(nameof(model.VehicleId), "Odabrano vozilo nije pronađeno.");
+            return View(model);
         }
 
         model.MileageBefore = vehicle.CurrentMileage;
@@ -108,7 +102,6 @@ public class OrdersController(ApplicationDbContext context) : Controller
         };
 
         vehicle.Status = VehicleStatus.Zauzeto;
-        vehicle.IsActive = true;
 
         context.VehicleOrders.Add(order);
         await context.SaveChangesAsync();
@@ -194,7 +187,6 @@ public class OrdersController(ApplicationDbContext context) : Controller
         {
             order.Vehicle.CurrentMileage = model.MileageAfter;
             order.Vehicle.Status = VehicleStatus.Aktivno;
-            order.Vehicle.IsActive = true;
         }
 
         await context.SaveChangesAsync();
@@ -238,7 +230,7 @@ public class OrdersController(ApplicationDbContext context) : Controller
             return;
         }
 
-        if (await context.VehicleOrders.AnyAsync(x => x.OrderNumber.Trim().ToUpper() == normalizedOrderNumber))
+        if (await context.VehicleOrders.AnyAsync(x => x.OrderNumber == normalizedOrderNumber))
         {
             ModelState.AddModelError(nameof(model.OrderNumber), "Broj naloga već postoji.");
         }
@@ -267,7 +259,7 @@ public class OrdersController(ApplicationDbContext context) : Controller
 
         if (activeOrderExists)
         {
-            ModelState.AddModelError(nameof(model.VehicleId), "Odabrano vozilo je već zauzeto.");
+            ModelState.AddModelError(nameof(model.VehicleId), "Odabrano vozilo je već izdano.");
         }
     }
 }

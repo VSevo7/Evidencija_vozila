@@ -43,7 +43,7 @@
                 </div>
                 <div class="col-md-6">
                     <label asp-for="ContactPhone" class="form-label"></label>
-                    <input asp-for="ContactPhone" class="form-control" autocomplete="tel" />
+                    <input asp-for="ContactPhone" class="form-control" autocomplete="tel" maxlength="30" />
                     <span asp-validation-for="ContactPhone" class="text-danger small"></span>
                 </div>
                 <div class="col-md-6">

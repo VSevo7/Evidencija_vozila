@@ -52,7 +52,7 @@
                         <input asp-for="CompleteOrder.OrderNumber" type="hidden" />
                         <div class="mb-3">
                             <label asp-for="CompleteOrder.MileageAfter" class="form-label"></label>
-                            <input asp-for="CompleteOrder.MileageAfter" class="form-control" />
+                            <input asp-for="CompleteOrder.MileageAfter" type="number" min="0" class="form-control" />
                         </div>
                         <div class="mb-3">
                             <label asp-for="CompleteOrder.Note" class="form-label"></label>

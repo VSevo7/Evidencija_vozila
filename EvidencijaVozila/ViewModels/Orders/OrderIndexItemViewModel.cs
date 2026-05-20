@@ -6,7 +6,6 @@ public class OrderIndexItemViewModel
     public string OrderNumber { get; set; } = string.Empty;
     public string Vehicle { get; set; } = string.Empty;
     public string Driver { get; set; } = string.Empty;
-    public string OrganizationalUnit { get; set; } = string.Empty;
     public string Sector { get; set; } = string.Empty;
     public string ServiceDepartment { get; set; } = string.Empty;
     public DateTime DepartureAt { get; set; }

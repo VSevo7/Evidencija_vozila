@@ -97,8 +97,7 @@ public class VehiclesController(ApplicationDbContext context) : Controller
     {
         return View("Form", new VehicleFormViewModel
         {
-            Status = VehicleStatus.Aktivno,
-            IsActive = true
+            Status = VehicleStatus.Aktivno
         });
     }
 
@@ -111,7 +110,7 @@ public class VehiclesController(ApplicationDbContext context) : Controller
 
         if (model.Status == VehicleStatus.Zauzeto)
         {
-            ModelState.AddModelError(nameof(model.Status), "Novo vozilo ne može biti u statusu 'Zauzeto' bez aktivnog naloga.");
+            ModelState.AddModelError(nameof(model.Status), "Novo vozilo ne može biti u statusu 'Izdano' bez aktivnog naloga.");
         }
 
         if (await context.Vehicles.AnyAsync(x =>
@@ -128,16 +127,15 @@ public class VehiclesController(ApplicationDbContext context) : Controller
         var vehicle = new Vehicle
         {
             RegistrationNumber = InputNormalizer.NormalizeRegistrationForStorage(model.RegistrationNumber),
-            BrandModel = model.BrandModel.Trim(),
+            BrandModel = InputNormalizer.NormalizeRequired(model.BrandModel),
             VehicleType = model.VehicleType,
-            CurrentTires = model.CurrentTires.Trim(),
+            CurrentTires = InputNormalizer.NormalizeRequired(model.CurrentTires),
             TireChangeNote = InputNormalizer.NormalizeOptional(model.TireChangeNote),
-            PurchasePrice = model.PurchasePrice,
+            PurchasePrice = decimal.Truncate(model.PurchasePrice),
             FuelType = model.FuelType,
             TransmissionType = model.TransmissionType,
             CurrentMileage = model.CurrentMileage,
-            Status = model.Status,
-            IsActive = model.Status != VehicleStatus.Rashod
+            Status = model.Status
         };
 
         context.Vehicles.Add(vehicle);
@@ -167,8 +165,7 @@ public class VehiclesController(ApplicationDbContext context) : Controller
             FuelType = vehicle.FuelType,
             TransmissionType = vehicle.TransmissionType,
             CurrentMileage = vehicle.CurrentMileage,
-            Status = vehicle.Status,
-            IsActive = vehicle.IsActive
+            Status = vehicle.Status
         });
     }
 
@@ -188,12 +185,12 @@ public class VehiclesController(ApplicationDbContext context) : Controller
 
         if (hasActiveOrder && model.Status != VehicleStatus.Zauzeto)
         {
-            ModelState.AddModelError(nameof(model.Status), "Vozilo s aktivnim nalogom mora ostati u statusu 'Zauzeto'.");
+            ModelState.AddModelError(nameof(model.Status), "Vozilo s aktivnim nalogom mora ostati u statusu 'Izdano'.");
         }
 
         if (!hasActiveOrder && model.Status == VehicleStatus.Zauzeto)
         {
-            ModelState.AddModelError(nameof(model.Status), "Status 'Zauzeto' postavlja se automatski kada postoji aktivan nalog.");
+            ModelState.AddModelError(nameof(model.Status), "Status 'Izdano' postavlja se automatski kada postoji aktivan nalog.");
         }
 
         if (await context.Vehicles.AnyAsync(x =>
@@ -209,16 +206,15 @@ public class VehiclesController(ApplicationDbContext context) : Controller
         }
 
         vehicle.RegistrationNumber = InputNormalizer.NormalizeRegistrationForStorage(model.RegistrationNumber);
-        vehicle.BrandModel = model.BrandModel.Trim();
+        vehicle.BrandModel = InputNormalizer.NormalizeRequired(model.BrandModel);
         vehicle.VehicleType = model.VehicleType;
-        vehicle.CurrentTires = model.CurrentTires.Trim();
+        vehicle.CurrentTires = InputNormalizer.NormalizeRequired(model.CurrentTires);
         vehicle.TireChangeNote = InputNormalizer.NormalizeOptional(model.TireChangeNote);
-        vehicle.PurchasePrice = model.PurchasePrice;
+        vehicle.PurchasePrice = decimal.Truncate(model.PurchasePrice);
         vehicle.FuelType = model.FuelType;
         vehicle.TransmissionType = model.TransmissionType;
         vehicle.CurrentMileage = model.CurrentMileage;
         vehicle.Status = model.Status;
-        vehicle.IsActive = model.Status != VehicleStatus.Rashod;
 
         await context.SaveChangesAsync();
         TempData["Success"] = "Vozilo je uspješno ažurirano.";

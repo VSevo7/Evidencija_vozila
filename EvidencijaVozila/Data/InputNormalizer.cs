@@ -2,6 +2,11 @@ namespace EvidencijaVozila.Data;
 
 public static class InputNormalizer
 {
+    public static string NormalizeRequired(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    }
+
     public static string NormalizeRegistrationLookup(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -18,12 +23,12 @@ public static class InputNormalizer
 
     public static string NormalizeRegistrationForStorage(string value)
     {
-        return value.Trim().ToUpperInvariant();
+        return NormalizeRequired(value).ToUpperInvariant();
     }
 
     public static string NormalizeOrderNumber(string value)
     {
-        return value.Trim().ToUpperInvariant();
+        return NormalizeRequired(value).ToUpperInvariant();
     }
 
     public static string? NormalizeOptional(string? value)
