@@ -35,10 +35,11 @@ public class AccountController(ApplicationDbContext context) : Controller
             return View(model);
         }
 
-        var user = await context.Users.FirstOrDefaultAsync(x => x.Username == model.Username);
+        var username = model.Username.Trim();
+        var user = await context.Users.FirstOrDefaultAsync(x => x.Username == username);
         if (user is null || user.Status != UserStatus.Aktivan)
         {
-            ModelState.AddModelError(string.Empty, "Neispravno korisnicko ime ili lozinka.");
+            ModelState.AddModelError(string.Empty, "Neispravno korisničko ime ili lozinka.");
             return View(model);
         }
 
@@ -46,7 +47,7 @@ public class AccountController(ApplicationDbContext context) : Controller
         var verify = hasher.VerifyHashedPassword(user, user.PasswordHash, model.Password);
         if (verify == PasswordVerificationResult.Failed)
         {
-            ModelState.AddModelError(string.Empty, "Neispravno korisnicko ime ili lozinka.");
+            ModelState.AddModelError(string.Empty, "Neispravno korisničko ime ili lozinka.");
             return View(model);
         }
 
@@ -63,11 +64,13 @@ public class AccountController(ApplicationDbContext context) : Controller
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity));
 
-        TempData["Success"] = "Uspjesno ste prijavljeni.";
+        TempData["Success"] = "Uspješno ste prijavljeni.";
         return RedirectToAction("Index", "Dashboard");
     }
 
+    [HttpPost]
     [Authorize]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

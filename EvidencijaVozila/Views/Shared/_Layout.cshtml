@@ -3,57 +3,45 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Evidencija sluzbenih vozila</title>
+    <title>@ViewData["Title"] - Evidencija službenih vozila</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/EvidencijaVozila.styles.css" asp-append-version="true" />
 </head>
 <body class="app-shell">
     <header class="mb-4">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-            <div class="container">
-                <a class="navbar-brand fw-semibold" asp-controller="Dashboard" asp-action="Index">Evidencija vozila</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="mainNav">
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        <ul class="navbar-nav me-auto">
-                            <li class="nav-item"><a class="nav-link" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
-                            @if (User.IsInRole(nameof(UserRole.Administrator)))
-                            {
-                                <li class="nav-item"><a class="nav-link" asp-controller="Users" asp-action="Index">Korisnici</a></li>
-                            }
-                            <li class="nav-item"><a class="nav-link" asp-controller="Vehicles" asp-action="Index">Vozila</a></li>
-                            @if (User.IsInRole(nameof(UserRole.Administrator)))
-                            {
-                                <li class="nav-item"><a class="nav-link" asp-controller="Orders" asp-action="Index">Nalozi</a></li>
-                            }
-                            <li class="nav-item"><a class="nav-link" asp-controller="Availability" asp-action="Index">Dostupnost</a></li>
-                            @if (User.IsInRole(nameof(UserRole.Administrator)))
-                            {
-                                <li class="nav-item"><a class="nav-link" asp-controller="Reports" asp-action="Index">Izvjestaji</a></li>
-                            }
-                        </ul>
-                        <div class="d-flex align-items-center gap-3 text-white">
-                            <span class="small">@User.Identity!.Name</span>
-                            <a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="Logout">Odjava</a>
-                        </div>
-                    }
-                </div>
+        <nav class="navbar app-navbar shadow-sm @(User.Identity?.IsAuthenticated == true ? "app-navbar-auth" : "app-navbar-guest")">
+            <div class="container d-flex justify-content-between align-items-center">
+                <a class="navbar-brand fw-semibold @(User.Identity?.IsAuthenticated == true ? string.Empty : "mx-auto text-center")"
+                   asp-controller="@(User.Identity?.IsAuthenticated == true ? "Dashboard" : "Account")"
+                   asp-action="@(User.Identity?.IsAuthenticated == true ? "Index" : "Login")">
+                    Evidencija vozila
+                </a>
+
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="d-flex align-items-center gap-3 app-navbar-user">
+                        <span class="small">@User.Identity!.Name</span>
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                            <button type="submit" class="btn btn-outline-light btn-sm app-logout-btn">Odjava</button>
+                        </form>
+                    </div>
+                }
             </div>
         </nav>
     </header>
+
     <div class="container pb-4">
         @if (TempData["Success"] is string successMessage)
         {
             <div class="alert alert-success">@successMessage</div>
         }
+
         @if (TempData["Error"] is string errorMessage)
         {
             <div class="alert alert-danger">@errorMessage</div>
         }
+
         <main role="main">
             @RenderBody()
         </main>
@@ -61,12 +49,12 @@
 
     <footer class="footer text-muted py-3">
         <div class="container">
-            2026 - Evidencija sluzbenih vozila
+            @DateTime.Now.Year - Evidencija službenih vozila
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

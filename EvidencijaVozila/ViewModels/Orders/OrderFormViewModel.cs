@@ -3,51 +3,46 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace EvidencijaVozila.ViewModels.Orders;
 
-public class OrderFormViewModel : IValidatableObject
+public class OrderFormViewModel
 {
     [Required]
     [Display(Name = "Broj naloga")]
     public string OrderNumber { get; set; } = string.Empty;
+
+    [Display(Name = "Ustrojstvena jedinica")]
+    public int OrganizationalUnitId { get; set; }
+
+    public string OrganizationalUnitName { get; set; } = "Ministarstvo unutarnjih poslova";
 
     [Required]
     [Display(Name = "Vozilo")]
     public int VehicleId { get; set; }
 
     [Required]
-    [Display(Name = "Vozac")]
+    [Display(Name = "Vozač")]
     public int DriverId { get; set; }
 
-    [Required]
-    [Display(Name = "Organizacijska jedinica")]
-    public int OrganizationalUnitId { get; set; }
-
-    [Display(Name = "Sluzbeni put")]
+    [Display(Name = "Službeni put")]
     public bool IsBusinessTrip { get; set; }
 
     [Required]
     [Display(Name = "Datum i vrijeme polaska")]
     public DateTime DepartureAt { get; set; }
 
-    [Required]
-    [Display(Name = "Datum i vrijeme povratka")]
-    public DateTime ReturnAt { get; set; }
-
     [Range(0, int.MaxValue)]
-    [Display(Name = "Stanje km prije polaska")]
+    [Display(Name = "Početna kilometraža")]
     public int MileageBefore { get; set; }
 
     [Display(Name = "Napomena")]
     public string? Note { get; set; }
 
-    public IEnumerable<SelectListItem> Vehicles { get; set; } = [];
     public IEnumerable<SelectListItem> Drivers { get; set; } = [];
-    public IEnumerable<SelectListItem> OrganizationalUnits { get; set; } = [];
+    public List<OrderVehicleOptionViewModel> VehicleOptions { get; set; } = [];
+}
 
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        if (ReturnAt <= DepartureAt)
-        {
-            yield return new ValidationResult("Vrijeme povratka mora biti nakon vremena polaska.", [nameof(ReturnAt)]);
-        }
-    }
+public class OrderVehicleOptionViewModel
+{
+    public int Id { get; set; }
+    public string Label { get; set; } = string.Empty;
+    public int CurrentMileage { get; set; }
 }

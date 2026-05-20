@@ -1,12 +1,16 @@
 @model IEnumerable<EvidencijaVozila.ViewModels.Vehicles.VehicleIndexItemViewModel>
 @{
     ViewData["Title"] = "Vozila";
+    var selectedStatus = ViewBag.SelectedStatus?.ToString();
+    var selectedVehicleType = ViewBag.SelectedVehicleType?.ToString();
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h2 mb-1">Vozila</h1>
-        <p class="text-muted mb-0">Pregled voznog parka po statusu i vrsti vozila.</p>
+<div class="d-flex justify-content-between align-items-center mb-4 app-page-head">
+    <div class="app-page-head-main">
+        <a asp-controller="Dashboard" asp-action="Index" class="app-home-back" aria-label="Povratak na početnu">&larr;</a>
+        <div>
+            <h1 class="h2 mb-0">Vozila</h1>
+        </div>
     </div>
     @if (User.IsInRole(nameof(UserRole.Administrator)))
     {
@@ -17,9 +21,29 @@
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <form method="get" class="row g-3">
-            <div class="col-md-4"><label class="form-label">Status</label><select name="status" asp-items="Html.GetEnumSelectList<VehicleStatus>()" class="form-select"><option value="">Svi</option></select></div>
-            <div class="col-md-4"><label class="form-label">Vrsta vozila</label><select name="vehicleType" asp-items="Html.GetEnumSelectList<VehicleType>()" class="form-select"><option value="">Sve</option></select></div>
-            <div class="col-md-4 d-flex align-items-end"><button type="submit" class="btn btn-outline-primary w-100">Filtriraj</button></div>
+            <div class="col-md-4">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">Svi statusi</option>
+                    @foreach (var item in Html.GetEnumSelectList<VehicleStatus>())
+                    {
+                        <option value="@item.Value" selected="@(selectedStatus == item.Value)">@item.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Vrsta vozila</label>
+                <select name="vehicleType" class="form-select">
+                    <option value="">Sve</option>
+                    @foreach (var item in Html.GetEnumSelectList<VehicleType>())
+                    {
+                        <option value="@item.Value" selected="@(selectedVehicleType == item.Value)">@item.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary w-100">Filtriraj</button>
+            </div>
         </form>
     </div>
 </div>
@@ -27,22 +51,38 @@
 <div class="card shadow-sm">
     <div class="table-responsive">
         <table class="table align-middle mb-0">
-            <thead><tr><th>Registracija</th><th>Marka i tip</th><th>Specifikacija</th><th>Km</th><th>Status</th>@if (User.IsInRole(nameof(UserRole.Administrator))) { <th class="text-end">Akcije</th> }</tr></thead>
-            <tbody>
-            @foreach (var vehicle in Model)
-            {
+            <thead>
                 <tr>
-                    <td>@vehicle.RegistrationNumber</td>
-                    <td>@vehicle.BrandModel</td>
-                    <td>@vehicle.Specification</td>
-                    <td>@vehicle.CurrentMileage</td>
-                    <td><span class="badge text-bg-@ViewHelpers.BadgeClass(vehicle.Status)">@vehicle.Status</span></td>
+                    <th>Registracija</th>
+                    <th>Marka i tip</th>
+                    <th>Specifikacije</th>
+                    <th>Km</th>
+                    <th>Status</th>
                     @if (User.IsInRole(nameof(UserRole.Administrator)))
                     {
-                        <td class="text-end"><a asp-action="Edit" asp-route-id="@vehicle.Id" class="btn btn-sm btn-outline-primary">Uredi</a></td>
+                        <th class="text-end">Akcije</th>
                     }
                 </tr>
-            }
+            </thead>
+            <tbody>
+                @foreach (var vehicle in Model)
+                {
+                    <tr>
+                        <td>@vehicle.RegistrationNumber</td>
+                        <td>@vehicle.BrandModel</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@vehicle.Id" class="btn btn-sm btn-outline-primary">Detalji</a>
+                        </td>
+                        <td>@vehicle.CurrentMileage</td>
+                        <td><span class="app-status-badge app-status-@ViewHelpers.BadgeClass(vehicle.Status)">@vehicle.Status</span></td>
+                        @if (User.IsInRole(nameof(UserRole.Administrator)))
+                        {
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@vehicle.Id" class="btn btn-sm btn-outline-primary">Uredi</a>
+                            </td>
+                        }
+                    </tr>
+                }
             </tbody>
         </table>
     </div>

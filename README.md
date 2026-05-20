@@ -1,52 +1,45 @@
-# Evidencija sluzbenih vozila
+# Evidencija vozila
 
-Studentska web aplikacija za evidenciju sluzbenih vozila, korisnika i naloga za upotrebu vozila.
-
-## Tehnologije
-
-- C#
-- ASP.NET Core MVC (.NET 8)
-- Entity Framework Core
-- SQL Server LocalDB
-- Bootstrap 5
-
-## Struktura
-
-- `EvidencijaVozila.sln` solution datoteka
-- `EvidencijaVozila/` glavni MVC projekt
-- `Controllers/` kontroleri aplikacije
-- `Models/` entiteti baze
-- `ViewModels/` modeli za forme i prikaze
-- `Views/` Razor stranice
-- `Data/` `DbContext`, inicijalizacija i pomoćne metode
+ASP.NET Core MVC aplikacija za internu evidenciju korisnika, službenih vozila i naloga za korištenje vozila.
 
 ## Funkcionalnosti
 
-- prijava korisnika s ulogama `Administrator` i `Korisnik`
-- dashboard sa stanjem sustava
-- upravljanje korisnicima
-- upravljanje vozilima
-- kreiranje i zakljucivanje naloga
-- pregled dostupnosti vozila po terminu
-- izvjestaji o koristenju i servisnim intervalima
+- prijava i odjava korisnika
+- administracija korisnika
+- evidencija vozila
+- pregled detalja vozila
+- kreiranje i završavanje naloga
+- pretraga vozila po registracijskoj oznaci
+- pretraga naloga po broju naloga
+
+Korisnike u sustav unosi administrator. Ne postoji samostalna registracija korisnika.
+
+## Tehnologije
+
+- .NET 8
+- ASP.NET Core MVC
+- Entity Framework Core
+- SQL Server LocalDB
+
+## Baza podataka
+
+Veza prema bazi nalazi se u [appsettings.json](C:\Users\Korisnik\OneDrive\Radna povrsina\Nova mapa\EvidencijaVozila\appsettings.json).
+
+Projekt koristi EF Core migracije. Pri pokretanju aplikacije migracije se primjenjuju automatski.
+
+Ako želiš potpuno praznu bazu za novi unos podataka, promijeni naziv baze u connection stringu ili obriši postojeću LocalDB bazu s tim nazivom.
 
 ## Pokretanje
 
-1. Otvori mapu ili solution `EvidencijaVozila.sln`.
-2. U terminalu idi u `EvidencijaVozila/`.
-3. Pokreni `dotnet build`.
-4. Pokreni `dotnet run`.
-5. Otvori adresu koju aplikacija ispise u terminalu.
+```powershell
+cd "C:\Users\Korisnik\OneDrive\Radna povrsina\Nova mapa\EvidencijaVozila"
+dotnet restore
+dotnet run
+```
 
-## Baza
+Zadana adresa u razvojnom okruženju je najčešće `http://localhost:5226`.
 
-Aplikacija koristi `SQL Server LocalDB` i pri prvom pokretanju sama kreira bazu `EvidencijaVozilaDb` te unosi pocetne podatke.
+## Početni administratorski račun
 
-Ako `LocalDB` nije instaliran, u `appsettings.json` promijeni connection string na svoju `SQL Server Express` instancu.
-
-## Demo korisnici
-
-- administrator: `admin`
-- korisnik: `iivic`
-- korisnik: `aanic`
-- lozinka za sve demo racune: `Admin123!`
+- korisničko ime: `admin`
+- lozinka: `Admin123!`

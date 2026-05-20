@@ -22,6 +22,10 @@ public class AppUser
     [Required, EmailAddress, StringLength(150)]
     public string Email { get; set; } = string.Empty;
 
+    [StringLength(30)]
+    [Display(Name = "Kontakt")]
+    public string? ContactPhone { get; set; }
+
     [Required]
     public UserRole Role { get; set; }
 
@@ -36,9 +40,15 @@ public class AppUser
     public int SectorId { get; set; }
     public Sector? Sector { get; set; }
 
-    [Display(Name = "Sluzba")]
-    public int ServiceDepartmentId { get; set; }
+    [Display(Name = "Služba")]
+    public int? ServiceDepartmentId { get; set; }
     public ServiceDepartment? ServiceDepartment { get; set; }
+
+    [Display(Name = "Pripadnost")]
+    public UserAssignmentType AssignmentType { get; set; }
+
+    [Display(Name = "Funkcija")]
+    public UserPosition Position { get; set; } = UserPosition.Zaposlenik;
 
     public ICollection<VehicleOrder> DrivenOrders { get; set; } = new List<VehicleOrder>();
     public ICollection<VehicleOrder> CreatedOrders { get; set; } = new List<VehicleOrder>();

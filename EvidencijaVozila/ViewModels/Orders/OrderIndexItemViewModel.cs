@@ -7,8 +7,11 @@ public class OrderIndexItemViewModel
     public string Vehicle { get; set; } = string.Empty;
     public string Driver { get; set; } = string.Empty;
     public string OrganizationalUnit { get; set; } = string.Empty;
+    public string Sector { get; set; } = string.Empty;
+    public string ServiceDepartment { get; set; } = string.Empty;
     public DateTime DepartureAt { get; set; }
     public DateTime ReturnAt { get; set; }
+    public bool IsCompleted { get; set; }
     public string Status { get; set; } = string.Empty;
 }
 
@@ -19,9 +22,12 @@ public class OrderDetailsViewModel
     public string Vehicle { get; set; } = string.Empty;
     public string Driver { get; set; } = string.Empty;
     public string OrganizationalUnit { get; set; } = string.Empty;
+    public string Sector { get; set; } = string.Empty;
+    public string ServiceDepartment { get; set; } = string.Empty;
     public bool IsBusinessTrip { get; set; }
     public DateTime DepartureAt { get; set; }
     public DateTime ReturnAt { get; set; }
+    public bool IsCompleted { get; set; }
     public int MileageBefore { get; set; }
     public int? MileageAfter { get; set; }
     public string? Note { get; set; }

@@ -5,7 +5,6 @@ using EvidencijaVozila.ViewModels.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace EvidencijaVozila.Controllers;
@@ -28,9 +27,11 @@ public class UsersController(ApplicationDbContext context) : Controller
                 FullName = x.FullName,
                 Username = x.Username,
                 Email = x.Email,
+                ContactPhone = x.ContactPhone,
                 Role = x.Role.ToDisplay(),
                 Status = x.Status.ToDisplay(),
-                Organization = $"{x.OrganizationalUnit!.Name} / {x.Sector!.Name} / {x.ServiceDepartment!.Name}"
+                Position = x.Position.ToDisplay(),
+                Organization = $"{x.OrganizationalUnit!.Name} / {x.Sector!.Name}{(x.ServiceDepartment != null ? " / " + x.ServiceDepartment.Name : string.Empty)}"
             })
             .ToListAsync();
 
@@ -42,8 +43,11 @@ public class UsersController(ApplicationDbContext context) : Controller
         var model = new UserFormViewModel
         {
             Status = UserStatus.Aktivan,
-            Role = UserRole.Korisnik
+            Role = UserRole.Korisnik,
+            AssignmentType = UserAssignmentType.Sektor,
+            Position = UserPosition.Zaposlenik
         };
+
         await PopulateDropdownsAsync(model);
         return View("Form", model);
     }
@@ -52,9 +56,10 @@ public class UsersController(ApplicationDbContext context) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(UserFormViewModel model)
     {
-        if (await context.Users.AnyAsync(x => x.Username == model.Username))
+        var username = model.Username.Trim();
+        if (await context.Users.AnyAsync(x => x.Username == username))
         {
-            ModelState.AddModelError(nameof(model.Username), "Korisnicko ime vec postoji.");
+            ModelState.AddModelError(nameof(model.Username), "Korisničko ime već postoji.");
         }
 
         if (string.IsNullOrWhiteSpace(model.Password))
@@ -68,30 +73,50 @@ public class UsersController(ApplicationDbContext context) : Controller
             return View("Form", model);
         }
 
+        model.SectorId = await ResolveSectorIdAsync(model);
+        model.ServiceDepartmentId = await ResolveServiceDepartmentIdAsync(model, model.SectorId);
+
+        if (!ModelState.IsValid || !model.SectorId.HasValue || (model.AssignmentType == UserAssignmentType.Sluzba && !model.ServiceDepartmentId.HasValue))
+        {
+            await PopulateDropdownsAsync(model);
+            return View("Form", model);
+        }
+
         var user = new AppUser
         {
-            FirstName = model.FirstName,
-            LastName = model.LastName,
-            Username = model.Username,
-            Email = model.Email,
+            FirstName = model.FirstName.Trim(),
+            LastName = model.LastName.Trim(),
+            Username = username,
+            Email = model.Email.Trim(),
+            ContactPhone = NormalizeOptionalValue(model.ContactPhone),
             Role = model.Role,
             Status = model.Status,
             OrganizationalUnitId = model.OrganizationalUnitId,
-            SectorId = model.SectorId,
-            ServiceDepartmentId = model.ServiceDepartmentId
+            SectorId = model.SectorId.Value,
+            ServiceDepartmentId = model.ServiceDepartmentId,
+            AssignmentType = model.AssignmentType,
+            Position = model.Position
         };
+
         user.PasswordHash = new PasswordHasher<AppUser>().HashPassword(user, model.Password!);
 
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
-        TempData["Success"] = "Korisnik je uspjesno dodan.";
+        TempData["Success"] = "Korisnik je uspješno dodan.";
         return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Edit(int id)
     {
-        var user = await context.Users.FindAsync(id);
+        var user = await context.Users
+            .AsNoTracking()
+            .Include(x => x.OrganizationalUnit)
+            .Include(x => x.Sector)
+            .Include(x => x.ServiceDepartment)
+                .ThenInclude(x => x!.Sector)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
         if (user is null)
         {
             return NotFound();
@@ -104,12 +129,20 @@ public class UsersController(ApplicationDbContext context) : Controller
             LastName = user.LastName,
             Username = user.Username,
             Email = user.Email,
+            ContactPhone = user.ContactPhone,
             Role = user.Role,
             Status = user.Status,
             OrganizationalUnitId = user.OrganizationalUnitId,
+            OrganizationalUnitName = user.OrganizationalUnit?.Name ?? "Ministarstvo unutarnjih poslova",
+            AssignmentType = user.AssignmentType,
             SectorId = user.SectorId,
-            ServiceDepartmentId = user.ServiceDepartmentId
+            ServiceDepartmentId = user.ServiceDepartmentId,
+            SectorName = user.AssignmentType == UserAssignmentType.Sektor ? user.Sector?.Name : null,
+            ServiceSectorName = user.ServiceDepartment?.Sector?.Name ?? user.Sector?.Name,
+            ServiceDepartmentName = user.ServiceDepartment?.Name,
+            Position = user.Position
         };
+
         await PopulateDropdownsAsync(model);
         return View("Form", model);
     }
@@ -124,9 +157,24 @@ public class UsersController(ApplicationDbContext context) : Controller
             return NotFound();
         }
 
-        if (await context.Users.AnyAsync(x => x.Username == model.Username && x.Id != id))
+        var username = model.Username.Trim();
+        if (await context.Users.AnyAsync(x => x.Username == username && x.Id != id))
         {
-            ModelState.AddModelError(nameof(model.Username), "Korisnicko ime vec postoji.");
+            ModelState.AddModelError(nameof(model.Username), "Korisničko ime već postoji.");
+        }
+
+        var isRemovingLastActiveAdmin =
+            user.Role == UserRole.Administrator &&
+            user.Status == UserStatus.Aktivan &&
+            (model.Role != UserRole.Administrator || model.Status != UserStatus.Aktivan) &&
+            !await context.Users.AnyAsync(x =>
+                x.Id != id &&
+                x.Role == UserRole.Administrator &&
+                x.Status == UserStatus.Aktivan);
+
+        if (isRemovingLastActiveAdmin)
+        {
+            ModelState.AddModelError(nameof(model.Role), "U sustavu mora ostati barem jedan aktivan administrator.");
         }
 
         if (!ModelState.IsValid)
@@ -135,14 +183,26 @@ public class UsersController(ApplicationDbContext context) : Controller
             return View("Form", model);
         }
 
-        user.FirstName = model.FirstName;
-        user.LastName = model.LastName;
-        user.Username = model.Username;
-        user.Email = model.Email;
+        model.SectorId = await ResolveSectorIdAsync(model);
+        model.ServiceDepartmentId = await ResolveServiceDepartmentIdAsync(model, model.SectorId);
+
+        if (!ModelState.IsValid || !model.SectorId.HasValue || (model.AssignmentType == UserAssignmentType.Sluzba && !model.ServiceDepartmentId.HasValue))
+        {
+            await PopulateDropdownsAsync(model);
+            return View("Form", model);
+        }
+
+        user.FirstName = model.FirstName.Trim();
+        user.LastName = model.LastName.Trim();
+        user.Username = username;
+        user.Email = model.Email.Trim();
+        user.ContactPhone = NormalizeOptionalValue(model.ContactPhone);
         user.Role = model.Role;
         user.Status = model.Status;
         user.OrganizationalUnitId = model.OrganizationalUnitId;
-        user.SectorId = model.SectorId;
+        user.AssignmentType = model.AssignmentType;
+        user.Position = model.Position;
+        user.SectorId = model.SectorId.Value;
         user.ServiceDepartmentId = model.ServiceDepartmentId;
 
         if (!string.IsNullOrWhiteSpace(model.Password))
@@ -151,7 +211,7 @@ public class UsersController(ApplicationDbContext context) : Controller
         }
 
         await context.SaveChangesAsync();
-        TempData["Success"] = "Korisnik je uspjesno azuriran.";
+        TempData["Success"] = "Korisnik je uspješno ažuriran.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -165,6 +225,20 @@ public class UsersController(ApplicationDbContext context) : Controller
             return NotFound();
         }
 
+        var isDisablingLastActiveAdmin =
+            user.Role == UserRole.Administrator &&
+            user.Status == UserStatus.Aktivan &&
+            !await context.Users.AnyAsync(x =>
+                x.Id != id &&
+                x.Role == UserRole.Administrator &&
+                x.Status == UserStatus.Aktivan);
+
+        if (isDisablingLastActiveAdmin)
+        {
+            TempData["Error"] = "U sustavu mora ostati barem jedan aktivan administrator.";
+            return RedirectToAction(nameof(Index));
+        }
+
         user.Status = user.Status == UserStatus.Aktivan ? UserStatus.Neaktivan : UserStatus.Aktivan;
         await context.SaveChangesAsync();
 
@@ -174,19 +248,119 @@ public class UsersController(ApplicationDbContext context) : Controller
 
     private async Task PopulateDropdownsAsync(UserFormViewModel model)
     {
-        model.OrganizationalUnits = await context.OrganizationalUnits
+        model.OrganizationalUnitId = await context.OrganizationalUnits
+            .Select(x => x.Id)
+            .FirstOrDefaultAsync();
+        model.OrganizationalUnitName = "Ministarstvo unutarnjih poslova";
+
+        model.SectorSuggestions = await context.Sectors
             .OrderBy(x => x.Name)
-            .Select(x => new SelectListItem(x.Name, x.Id.ToString()))
+            .Select(x => x.Name)
             .ToListAsync();
 
-        model.Sectors = await context.Sectors
+        model.ServiceDepartmentSuggestions = await context.ServiceDepartments
             .OrderBy(x => x.Name)
-            .Select(x => new SelectListItem(x.Name, x.Id.ToString()))
-            .ToListAsync();
-
-        model.ServiceDepartments = await context.ServiceDepartments
-            .OrderBy(x => x.Name)
-            .Select(x => new SelectListItem(x.Name, x.Id.ToString()))
+            .Select(x => x.Name)
             .ToListAsync();
     }
+
+    private async Task<int?> ResolveSectorIdAsync(UserFormViewModel model)
+    {
+        var fieldName = model.AssignmentType == UserAssignmentType.Sektor
+            ? nameof(model.SectorName)
+            : nameof(model.ServiceSectorName);
+
+        var sectorName = model.AssignmentType == UserAssignmentType.Sektor
+            ? model.SectorName
+            : model.ServiceSectorName;
+
+        if (string.IsNullOrWhiteSpace(sectorName))
+        {
+            return null;
+        }
+
+        return await GetOrCreateSectorAsync(sectorName, model.OrganizationalUnitId, fieldName);
+    }
+
+    private async Task<int?> ResolveServiceDepartmentIdAsync(UserFormViewModel model, int? sectorId)
+    {
+        if (model.AssignmentType != UserAssignmentType.Sluzba)
+        {
+            return null;
+        }
+
+        if (!sectorId.HasValue)
+        {
+            return null;
+        }
+
+        var serviceName = model.ServiceDepartmentName!.Trim();
+        var normalizedName = NormalizeName(serviceName);
+        var matchingServices = await context.ServiceDepartments
+            .Where(x =>
+                x.SectorId == sectorId.Value &&
+                x.Name.Trim().ToUpper() == normalizedName)
+            .OrderBy(x => x.Id)
+            .Take(2)
+            .ToListAsync();
+
+        if (matchingServices.Count > 1)
+        {
+            ModelState.AddModelError(nameof(model.ServiceDepartmentName), "Postoji više službi s istim nazivom u odabranom sektoru. Uredite organizaciju prije spremanja korisnika.");
+            return null;
+        }
+
+        if (matchingServices.Count == 1)
+        {
+            return matchingServices[0].Id;
+        }
+
+        var newService = new ServiceDepartment
+        {
+            Name = serviceName,
+            SectorId = sectorId.Value
+        };
+
+        context.ServiceDepartments.Add(newService);
+        await context.SaveChangesAsync();
+        return newService.Id;
+    }
+
+    private async Task<int?> GetOrCreateSectorAsync(string sectorName, int organizationalUnitId, string fieldName)
+    {
+        var normalizedName = NormalizeName(sectorName);
+        var matchingSectors = await context.Sectors
+            .Where(x =>
+                x.OrganizationalUnitId == organizationalUnitId &&
+                x.Name.Trim().ToUpper() == normalizedName)
+            .OrderBy(x => x.Id)
+            .Take(2)
+            .ToListAsync();
+
+        if (matchingSectors.Count > 1)
+        {
+            ModelState.AddModelError(fieldName, "Postoji više sektora s istim nazivom. Uredite organizaciju prije spremanja korisnika.");
+            return null;
+        }
+
+        if (matchingSectors.Count == 1)
+        {
+            return matchingSectors[0].Id;
+        }
+
+        var newSector = new Sector
+        {
+            Name = sectorName.Trim(),
+            OrganizationalUnitId = organizationalUnitId
+        };
+
+        context.Sectors.Add(newSector);
+        await context.SaveChangesAsync();
+        return newSector.Id;
+    }
+
+    private static string NormalizeName(string value) => value.Trim().ToUpperInvariant();
+
+    private static string? NormalizeOptionalValue(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

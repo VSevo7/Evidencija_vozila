@@ -1,8 +1,15 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace EvidencijaVozila.Enums;
 
 public enum VehicleStatus
 {
-    Slobodno = 1,
+    [Display(Name = "Aktivno")]
+    Aktivno = 1,
+
+    [Display(Name = "Izdano")]
     Zauzeto = 2,
-    VanUpotrebe = 3
+
+    [Display(Name = "Rashod")]
+    Rashod = 3
 }

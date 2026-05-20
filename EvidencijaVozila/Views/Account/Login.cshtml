@@ -3,28 +3,56 @@
     ViewData["Title"] = "Prijava";
 }
 
-<div class="row justify-content-center align-items-center min-vh-75">
-    <div class="col-md-6 col-lg-4">
-        <div class="card shadow-lg border-0">
-            <div class="card-body p-4">
-                <h1 class="h3 text-center mb-2">Prijava u sustav</h1>
-                <p class="text-muted text-center mb-4">Evidencija sluzbenih vozila i naloga</p>
-                <form asp-action="Login" method="post">
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-                    <div class="mb-3">
-                        <label asp-for="Username" class="form-label"></label>
-                        <input asp-for="Username" class="form-control" />
-                        <span asp-validation-for="Username" class="text-danger small"></span>
+<div class="login-page">
+    <div class="login-overlay"></div>
+    <div class="container position-relative">
+        <div class="row justify-content-center align-items-center min-vh-100 py-5">
+            <div class="col-lg-8">
+                <div class="login-hero text-center mb-5">
+                    <div class="login-hero-art" aria-hidden="true">
+                        <svg viewBox="0 0 680 260" class="login-outline login-outline-car">
+                            <path d="M120 175 L165 130 C176 119 190 112 205 112 H360 C377 112 392 120 404 134 L437 175" />
+                            <path d="M154 175 H453 C474 175 491 191 491 211 H109 C109 191 126 175 154 175 Z" />
+                            <path d="M212 113 L238 84 H344 L377 113" />
+                            <circle cx="183" cy="210" r="25" />
+                            <circle cx="416" cy="210" r="25" />
+                            <path d="M155 176 L194 176" />
+                            <path d="M407 176 L446 176" />
+                        </svg>
+                        <svg viewBox="0 0 220 220" class="login-outline login-outline-lock">
+                            <path d="M70 94 V70 C70 43 91 22 118 22 C145 22 166 43 166 70 V94" />
+                            <rect x="52" y="94" width="132" height="96" rx="18" ry="18" />
+                            <path d="M118 124 V152" />
+                            <circle cx="118" cy="118" r="6" />
+                        </svg>
                     </div>
-                    <div class="mb-3">
-                        <label asp-for="Password" class="form-label"></label>
-                        <input asp-for="Password" class="form-control" />
-                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    <h1 class="login-title">Evidencija vozila</h1>
+                    <p class="login-subtitle">Sustav za evidenciju službenih vozila, korisnika i naloga za upotrebu vozila.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card login-card shadow-lg border-0">
+                    <div class="card-body p-4 p-lg-5">
+                        <h2 class="h3 text-center mb-2">Prijava u sustav</h2>
+                        <p class="text-muted text-center mb-4">Unesite korisničke podatke za nastavak rada.</p>
+                        <form asp-action="Login" method="post">
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                            <div class="mb-3">
+                                <label asp-for="Username" class="form-label"></label>
+                                <input asp-for="Username" class="form-control" autocomplete="username" />
+                                <span asp-validation-for="Username" class="text-danger small"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="Password" class="form-label"></label>
+                                <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Prijava</button>
+                        </form>
+                        <div class="alert login-info mt-4 mb-0 small">
+                            Demo administrator: <strong>admin</strong> / <strong>Admin123!</strong>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Prijava</button>
-                </form>
-                <div class="alert alert-info mt-4 mb-0 small">
-                    Demo admin: <strong>admin</strong> / <strong>Admin123!</strong>
                 </div>
             </div>
         </div>

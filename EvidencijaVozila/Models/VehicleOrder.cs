@@ -15,7 +15,7 @@ public class VehicleOrder
     public int VehicleId { get; set; }
     public Vehicle? Vehicle { get; set; }
 
-    [Display(Name = "Vozac")]
+    [Display(Name = "Vozač")]
     public int DriverId { get; set; }
     public AppUser? Driver { get; set; }
 
@@ -23,7 +23,7 @@ public class VehicleOrder
     public int OrganizationalUnitId { get; set; }
     public OrganizationalUnit? OrganizationalUnit { get; set; }
 
-    [Display(Name = "Sluzbeni put")]
+    [Display(Name = "Službeni put")]
     public bool IsBusinessTrip { get; set; }
 
     [Display(Name = "Datum i vrijeme polaska")]

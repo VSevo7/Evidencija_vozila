@@ -1,72 +1,145 @@
 @model EvidencijaVozila.ViewModels.Dashboard.DashboardViewModel
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Početna";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h2 mb-1">Dashboard</h1>
-        <p class="text-muted mb-0">Pregled stanja vozila, korisnika i naloga.</p>
-    </div>
-    @if (User.IsInRole(nameof(UserRole.Administrator)))
-    {
-        <a asp-controller="Orders" asp-action="Create" class="btn btn-primary">Novi nalog</a>
-    }
+<div class="mb-4">
+    <h1 class="h2 mb-0">Početna</h1>
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-3"><div class="card stat-card"><div class="card-body"><div class="stat-label">Ukupno vozila</div><div class="stat-value">@Model.TotalVehicles</div></div></div></div>
-    <div class="col-md-3"><div class="card stat-card"><div class="card-body"><div class="stat-label">Slobodna vozila</div><div class="stat-value">@Model.AvailableVehicles</div></div></div></div>
-    <div class="col-md-3"><div class="card stat-card"><div class="card-body"><div class="stat-label">Aktivni nalozi</div><div class="stat-value">@Model.ActiveOrders</div></div></div></div>
-    <div class="col-md-3"><div class="card stat-card"><div class="card-body"><div class="stat-label">Korisnici</div><div class="stat-value">@Model.TotalUsers</div></div></div></div>
-</div>
-
-<div class="row g-4">
-    <div class="col-lg-5">
-        <div class="card shadow-sm h-100">
+    <div class="col-md-3">
+        <div class="card stat-card">
             <div class="card-body">
-                <h2 class="h5 mb-3">Servisna upozorenja</h2>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle">
-                        <thead><tr><th>Registracija</th><th>Vozilo</th><th>Km</th><th>Do servisa</th></tr></thead>
-                        <tbody>
-                        @foreach (var item in Model.ServiceAlerts)
-                        {
-                            <tr>
-                                <td>@item.RegistrationNumber</td>
-                                <td>@item.BrandModel</td>
-                                <td>@item.CurrentMileage</td>
-                                <td>@item.KmUntilService</td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
-                </div>
+                <div class="stat-label">Ukupno vozila</div>
+                <div class="stat-value">@Model.TotalVehicles</div>
             </div>
         </div>
     </div>
-    <div class="col-lg-7">
-        <div class="card shadow-sm h-100">
+    <div class="col-md-3">
+        <div class="card stat-card">
             <div class="card-body">
-                <h2 class="h5 mb-3">Zadnji nalozi</h2>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle">
-                        <thead><tr><th>Broj</th><th>Vozilo</th><th>Vozac</th><th>Termin</th><th>Status</th></tr></thead>
-                        <tbody>
-                        @foreach (var order in Model.RecentOrders)
-                        {
-                            <tr>
-                                <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">@order.OrderNumber</a></td>
-                                <td>@order.Vehicle</td>
-                                <td>@order.Driver</td>
-                                <td>@order.DepartureAt.ToString("dd.MM.yyyy HH:mm")<br /><small>@order.ReturnAt.ToString("dd.MM.yyyy HH:mm")</small></td>
-                                <td><span class="badge text-bg-@ViewHelpers.BadgeClass(order.Status)">@order.Status</span></td>
-                            </tr>
-                        }
-                        </tbody>
-                    </table>
-                </div>
+                <div class="stat-label">Slobodna vozila</div>
+                <div class="stat-value">@Model.AvailableVehicles</div>
             </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-label">Aktivni nalozi</div>
+                <div class="stat-value">@Model.ActiveOrders</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-label">Korisnici</div>
+                <div class="stat-value">@Model.TotalUsers</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm dashboard-hub-card">
+    <div class="card-body p-4 p-lg-5">
+        <div class="dashboard-section mb-4">
+            <div class="row g-3">
+                <div class="col-md-6 col-xl-3">
+                    <a asp-controller="Dashboard" asp-action="Index" class="dashboard-module-link dashboard-module-link-active">
+                        <span class="dashboard-module-title">Početna</span>
+                    </a>
+                </div>
+
+                @if (User.IsInRole(nameof(UserRole.Administrator)))
+                {
+                    <div class="col-md-6 col-xl-3">
+                        <a asp-controller="Users" asp-action="Index" class="dashboard-module-link">
+                            <span class="dashboard-module-title">Korisnici</span>
+                        </a>
+                    </div>
+                }
+
+                <div class="col-md-6 col-xl-3">
+                    <a asp-controller="Vehicles" asp-action="Index" class="dashboard-module-link">
+                        <span class="dashboard-module-title">Vozila</span>
+                    </a>
+                </div>
+
+                @if (User.IsInRole(nameof(UserRole.Administrator)))
+                {
+                    <div class="col-md-6 col-xl-3">
+                        <a asp-controller="Orders" asp-action="Index" class="dashboard-module-link">
+                            <span class="dashboard-module-title">Nalozi</span>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="dashboard-divider"></div>
+
+        <div class="dashboard-section pt-4">
+            <h2 class="h4 mb-3">Pretraga vozila</h2>
+
+            <form method="get" class="row g-3 align-items-end dashboard-search-form">
+                <div class="col-lg-8">
+                    <label for="registrationQuery" class="form-label">Registracijska oznaka</label>
+                    <input id="registrationQuery"
+                           name="registrationQuery"
+                           value="@Model.VehicleSearchTerm"
+                           class="form-control"
+                           placeholder="Primjer: ZG1234RE ili ZG-1234-RE" />
+                </div>
+                <div class="col-lg-4">
+                    <button type="submit" class="btn btn-primary w-100">Pretraži vozilo</button>
+                </div>
+            </form>
+
+            @if (Model.SearchPerformed)
+            {
+                <div class="dashboard-search-results mt-4">
+                    @if (!Model.VehicleSearchResults.Any())
+                    {
+                        <div class="alert alert-danger mb-0">Nije pronađeno vozilo za upisanu registracijsku oznaku.</div>
+                    }
+                    else
+                    {
+                        <div class="row g-3">
+                            @foreach (var vehicle in Model.VehicleSearchResults)
+                            {
+                                <div class="col-12">
+                                    <div class="dashboard-search-result">
+                                        <div class="dashboard-search-head">
+                                            <div>
+                                                <div class="dashboard-search-title">@vehicle.RegistrationNumber</div>
+                                                <div class="dashboard-search-subtitle">@vehicle.BrandModel</div>
+                                            </div>
+                                            <span class="app-status-badge app-status-@ViewHelpers.BadgeClass(vehicle.Status)">@vehicle.Status</span>
+                                        </div>
+
+                                        <div class="dashboard-search-grid">
+                                            <div>
+                                                <span class="dashboard-search-label">Specifikacija</span>
+                                                <strong>@vehicle.Specification</strong>
+                                            </div>
+                                            <div>
+                                                <span class="dashboard-search-label">Trenutno stanje km</span>
+                                                <strong>@vehicle.CurrentMileage</strong>
+                                            </div>
+                                            <div>
+                                                <span class="dashboard-search-label">Aktivni nalog</span>
+                                                <strong>@(string.IsNullOrWhiteSpace(vehicle.ActiveOrderNumber) ? "Vozilo nije izdano" : vehicle.ActiveOrderNumber)</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
         </div>
     </div>
 </div>

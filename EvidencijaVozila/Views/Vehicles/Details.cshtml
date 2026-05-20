@@ -1,0 +1,73 @@
+@model EvidencijaVozila.ViewModels.Vehicles.VehicleDetailsViewModel
+@{
+    ViewData["Title"] = "Detalji vozila";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 app-page-head">
+    <div class="app-page-head-main">
+        <a asp-controller="Dashboard" asp-action="Index" class="app-home-back" aria-label="Povratak na početnu">&larr;</a>
+        <div>
+            <h1 class="h2 mb-0">Detalji vozila @Model.RegistrationNumber</h1>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" class="btn btn-outline-secondary">Natrag</a>
+        @if (User.IsInRole(nameof(UserRole.Administrator)))
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Uredi</a>
+        }
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="vehicle-detail-label">Registracija</div>
+                <div class="vehicle-detail-value">@Model.RegistrationNumber</div>
+            </div>
+            <div class="col-md-6">
+                <div class="vehicle-detail-label">Marka i tip</div>
+                <div class="vehicle-detail-value">@Model.BrandModel</div>
+            </div>
+            <div class="col-md-4">
+                <div class="vehicle-detail-label">Vrsta vozila</div>
+                <div class="vehicle-detail-value">@Model.VehicleType</div>
+            </div>
+            <div class="col-md-4">
+                <div class="vehicle-detail-label">Vrsta goriva</div>
+                <div class="vehicle-detail-value">@Model.FuelType</div>
+            </div>
+            <div class="col-md-4">
+                <div class="vehicle-detail-label">Vrsta mjenjača</div>
+                <div class="vehicle-detail-value">@Model.TransmissionType</div>
+            </div>
+            <div class="col-md-4">
+                <div class="vehicle-detail-label">Gume</div>
+                <div class="vehicle-detail-value">@Model.CurrentTires</div>
+            </div>
+            <div class="col-md-4">
+                <div class="vehicle-detail-label">Datum izmjene guma</div>
+                <div class="vehicle-detail-value">@(string.IsNullOrWhiteSpace(Model.TireChangeNote) ? "-" : Model.TireChangeNote)</div>
+            </div>
+            <div class="col-md-4">
+                <div class="vehicle-detail-label">Trenutna kilometraža</div>
+                <div class="vehicle-detail-value">@Model.CurrentMileage km</div>
+            </div>
+            <div class="col-md-4">
+                <div class="vehicle-detail-label">Nabavna cijena</div>
+                <div class="vehicle-detail-value">@Model.PurchasePrice.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("hr-HR")) &euro;</div>
+            </div>
+            <div class="col-md-4">
+                <div class="vehicle-detail-label">Status</div>
+                <div class="vehicle-detail-value">
+                    <span class="app-status-badge app-status-@ViewHelpers.BadgeClass(Model.Status)">@Model.Status</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="vehicle-detail-label">Aktivni nalog</div>
+                <div class="vehicle-detail-value">@(string.IsNullOrWhiteSpace(Model.ActiveOrderNumber) ? "Vozilo nije izdano" : Model.ActiveOrderNumber)</div>
+            </div>
+        </div>
+    </div>
+</div>

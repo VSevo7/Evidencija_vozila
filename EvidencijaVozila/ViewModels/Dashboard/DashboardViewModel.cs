@@ -6,26 +6,17 @@ public class DashboardViewModel
     public int AvailableVehicles { get; set; }
     public int ActiveOrders { get; set; }
     public int TotalUsers { get; set; }
-    public List<ServiceAlertViewModel> ServiceAlerts { get; set; } = [];
-    public List<RecentOrderViewModel> RecentOrders { get; set; } = [];
+    public string? VehicleSearchTerm { get; set; }
+    public List<DashboardVehicleSearchResultViewModel> VehicleSearchResults { get; set; } = [];
+    public bool SearchPerformed => !string.IsNullOrWhiteSpace(VehicleSearchTerm);
 }
 
-public class ServiceAlertViewModel
+public class DashboardVehicleSearchResultViewModel
 {
     public string RegistrationNumber { get; set; } = string.Empty;
     public string BrandModel { get; set; } = string.Empty;
+    public string Specification { get; set; } = string.Empty;
     public int CurrentMileage { get; set; }
-    public int ServiceIntervalKm { get; set; }
-    public int KmUntilService { get; set; }
-}
-
-public class RecentOrderViewModel
-{
-    public int Id { get; set; }
-    public string OrderNumber { get; set; } = string.Empty;
-    public string Vehicle { get; set; } = string.Empty;
-    public string Driver { get; set; } = string.Empty;
-    public DateTime DepartureAt { get; set; }
-    public DateTime ReturnAt { get; set; }
     public string Status { get; set; } = string.Empty;
+    public string? ActiveOrderNumber { get; set; }
 }

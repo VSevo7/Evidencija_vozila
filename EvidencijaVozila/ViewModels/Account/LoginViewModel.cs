@@ -4,8 +4,8 @@ namespace EvidencijaVozila.ViewModels.Account;
 
 public class LoginViewModel
 {
-    [Required(ErrorMessage = "Unesite korisnicko ime.")]
-    [Display(Name = "Korisnicko ime")]
+    [Required(ErrorMessage = "Unesite korisničko ime.")]
+    [Display(Name = "Korisničko ime")]
     public string Username { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Unesite lozinku.")]

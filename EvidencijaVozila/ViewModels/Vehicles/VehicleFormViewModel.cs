@@ -19,13 +19,12 @@ public class VehicleFormViewModel
     [Display(Name = "Vrsta vozila")]
     public VehicleType VehicleType { get; set; }
 
-    [Range(1, int.MaxValue)]
-    [Display(Name = "Period redovnog servisa (km)")]
-    public int ServiceIntervalKm { get; set; }
-
     [Required]
     [Display(Name = "Trenutne gume")]
     public string CurrentTires { get; set; } = string.Empty;
+
+    [Display(Name = "Datum izmjene guma")]
+    public string? TireChangeNote { get; set; }
 
     [Range(0, 999999999)]
     [Display(Name = "Nabavna cijena")]
@@ -36,7 +35,7 @@ public class VehicleFormViewModel
     public FuelType FuelType { get; set; }
 
     [Required]
-    [Display(Name = "Vrsta mjenjaca")]
+    [Display(Name = "Vrsta mjenjača")]
     public TransmissionType TransmissionType { get; set; }
 
     [Range(0, int.MaxValue)]

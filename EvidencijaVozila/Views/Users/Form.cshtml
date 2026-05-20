@@ -1,12 +1,15 @@
 @model EvidencijaVozila.ViewModels.Users.UserFormViewModel
 @{
     ViewData["Title"] = Model.Id.HasValue ? "Uredi korisnika" : "Dodaj korisnika";
+    var isSectorAssignment = Model.AssignmentType == UserAssignmentType.Sektor;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h2 mb-1">@ViewData["Title"]</h1>
-        <p class="text-muted mb-0">Unos osnovnih podataka i organizacijske pripadnosti.</p>
+<div class="d-flex justify-content-between align-items-center mb-4 app-page-head">
+    <div class="app-page-head-main">
+        <a asp-controller="Dashboard" asp-action="Index" class="app-home-back" aria-label="Povratak na početnu">&larr;</a>
+        <div>
+            <h1 class="h2 mb-0">@ViewData["Title"]</h1>
+        </div>
     </div>
     <a asp-action="Index" class="btn btn-outline-secondary">Natrag</a>
 </div>
@@ -14,19 +17,93 @@
 <div class="card shadow-sm">
     <div class="card-body">
         <form asp-action="@(Model.Id.HasValue ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post">
+            <input asp-for="OrganizationalUnitId" type="hidden" />
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
             <div class="row g-3">
-                <div class="col-md-6"><label asp-for="FirstName" class="form-label"></label><input asp-for="FirstName" class="form-control" /><span asp-validation-for="FirstName" class="text-danger small"></span></div>
-                <div class="col-md-6"><label asp-for="LastName" class="form-label"></label><input asp-for="LastName" class="form-control" /><span asp-validation-for="LastName" class="text-danger small"></span></div>
-                <div class="col-md-6"><label asp-for="Username" class="form-label"></label><input asp-for="Username" class="form-control" /><span asp-validation-for="Username" class="text-danger small"></span></div>
-                <div class="col-md-6"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger small"></span></div>
-                <div class="col-md-6"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control" /><span asp-validation-for="Password" class="text-danger small"></span></div>
-                <div class="col-md-3"><label asp-for="Role" class="form-label"></label><select asp-for="Role" asp-items="Html.GetEnumSelectList<UserRole>()" class="form-select"></select></div>
-                <div class="col-md-3"><label asp-for="Status" class="form-label"></label><select asp-for="Status" asp-items="Html.GetEnumSelectList<UserStatus>()" class="form-select"></select></div>
-                <div class="col-md-4"><label asp-for="OrganizationalUnitId" class="form-label"></label><select asp-for="OrganizationalUnitId" asp-items="Model.OrganizationalUnits" class="form-select"><option value="">Odaberi</option></select></div>
-                <div class="col-md-4"><label asp-for="SectorId" class="form-label"></label><select asp-for="SectorId" asp-items="Model.Sectors" class="form-select"><option value="">Odaberi</option></select></div>
-                <div class="col-md-4"><label asp-for="ServiceDepartmentId" class="form-label"></label><select asp-for="ServiceDepartmentId" asp-items="Model.ServiceDepartments" class="form-select"><option value="">Odaberi</option></select></div>
+                <div class="col-md-6">
+                    <label asp-for="FirstName" class="form-label"></label>
+                    <input asp-for="FirstName" class="form-control" autocomplete="given-name" />
+                    <span asp-validation-for="FirstName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="LastName" class="form-label"></label>
+                    <input asp-for="LastName" class="form-control" autocomplete="family-name" />
+                    <span asp-validation-for="LastName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Username" class="form-label"></label>
+                    <input asp-for="Username" class="form-control" autocomplete="username" />
+                    <span asp-validation-for="Username" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" autocomplete="email" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ContactPhone" class="form-label"></label>
+                    <input asp-for="ContactPhone" class="form-control" autocomplete="tel" />
+                    <span asp-validation-for="ContactPhone" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Role" class="form-label"></label>
+                    <select asp-for="Role" asp-items="Html.GetEnumSelectList<UserRole>()" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Status" class="form-label"></label>
+                    <select asp-for="Status" asp-items="Html.GetEnumSelectList<UserStatus>()" class="form-select"></select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Ustrojstvena jedinica</label>
+                    <input class="form-control" value="@Model.OrganizationalUnitName" readonly />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="AssignmentType" class="form-label"></label>
+                    <select asp-for="AssignmentType" asp-items="Html.GetEnumSelectList<UserAssignmentType>()" class="form-select js-assignment-type"></select>
+                    <span asp-validation-for="AssignmentType" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Position" class="form-label"></label>
+                    <select asp-for="Position" asp-items="Html.GetEnumSelectList<UserPosition>()" class="form-select js-position-select"></select>
+                    <span asp-validation-for="Position" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 js-sector-group" style="display:@(isSectorAssignment ? "block" : "none");">
+                    <label asp-for="SectorName" class="form-label"></label>
+                    <input asp-for="SectorName" class="form-control" list="sector-suggestions" />
+                    <span asp-validation-for="SectorName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 js-service-sector-group" style="display:@(isSectorAssignment ? "none" : "block");">
+                    <label asp-for="ServiceSectorName" class="form-label"></label>
+                    <input asp-for="ServiceSectorName" class="form-control" list="sector-suggestions" />
+                    <span asp-validation-for="ServiceSectorName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 js-service-group" style="display:@(isSectorAssignment ? "none" : "block");">
+                    <label asp-for="ServiceDepartmentName" class="form-label"></label>
+                    <input asp-for="ServiceDepartmentName" class="form-control" list="service-suggestions" />
+                    <span asp-validation-for="ServiceDepartmentName" class="text-danger small"></span>
+                </div>
             </div>
+
+            <datalist id="sector-suggestions">
+                @foreach (var sector in Model.SectorSuggestions)
+                {
+                    <option value="@sector"></option>
+                }
+            </datalist>
+
+            <datalist id="service-suggestions">
+                @foreach (var service in Model.ServiceDepartmentSuggestions)
+                {
+                    <option value="@service"></option>
+                }
+            </datalist>
+
             <div class="mt-4">
                 <button type="submit" class="btn btn-primary">Spremi</button>
             </div>
@@ -36,4 +113,62 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const assignmentSelect = document.querySelector('.js-assignment-type');
+            const positionSelect = document.querySelector('.js-position-select');
+            const sectorGroup = document.querySelector('.js-sector-group');
+            const serviceSectorGroup = document.querySelector('.js-service-sector-group');
+            const serviceGroup = document.querySelector('.js-service-group');
+
+            if (!assignmentSelect || !positionSelect || !sectorGroup || !serviceSectorGroup || !serviceGroup) {
+                return;
+            }
+
+            const sectorAssignmentValue = '@((int)UserAssignmentType.Sektor)';
+            const voditeljSektoraValue = '@((int)UserPosition.VoditeljSektora)';
+            const voditeljSluzbeValue = '@((int)UserPosition.VoditeljSluzbe)';
+
+            const sectorInput = sectorGroup.querySelector('input');
+            const serviceSectorInput = serviceSectorGroup.querySelector('input');
+            const serviceInput = serviceGroup.querySelector('input');
+
+            const syncState = () => {
+                const isSector = assignmentSelect.value === sectorAssignmentValue;
+
+                sectorGroup.style.display = isSector ? 'block' : 'none';
+                serviceSectorGroup.style.display = isSector ? 'none' : 'block';
+                serviceGroup.style.display = isSector ? 'none' : 'block';
+
+                if (isSector) {
+                    if (serviceSectorInput) {
+                        serviceSectorInput.value = '';
+                    }
+
+                    if (serviceInput) {
+                        serviceInput.value = '';
+                    }
+                } else if (sectorInput) {
+                    sectorInput.value = '';
+                }
+
+                Array.from(positionSelect.options).forEach(option => {
+                    const hideForSector = isSector && option.value === voditeljSluzbeValue;
+                    const hideForService = !isSector && option.value === voditeljSektoraValue;
+                    option.hidden = hideForSector || hideForService;
+                });
+
+                const currentOption = positionSelect.options[positionSelect.selectedIndex];
+                if (currentOption?.hidden) {
+                    const fallback = Array.from(positionSelect.options).find(option => !option.hidden);
+                    if (fallback) {
+                        positionSelect.value = fallback.value;
+                    }
+                }
+            };
+
+            assignmentSelect.addEventListener('change', syncState);
+            syncState();
+        })();
+    </script>
 }

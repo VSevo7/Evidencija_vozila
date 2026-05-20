@@ -3,10 +3,12 @@
     ViewData["Title"] = "Detalji naloga";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h2 mb-1">Detalji naloga @Model.OrderNumber</h1>
-        <p class="text-muted mb-0">Pregled svih podataka o koristenju vozila.</p>
+<div class="d-flex justify-content-between align-items-center mb-4 app-page-head">
+    <div class="app-page-head-main">
+        <a asp-controller="Dashboard" asp-action="Index" class="app-home-back" aria-label="Povratak na početnu">&larr;</a>
+        <div>
+            <h1 class="h2 mb-0">Detalji naloga @Model.OrderNumber</h1>
+        </div>
     </div>
     <a asp-action="Index" class="btn btn-outline-secondary">Natrag</a>
 </div>
@@ -19,13 +21,17 @@
                     <dt class="col-sm-4">Broj naloga</dt><dd class="col-sm-8">@Model.OrderNumber</dd>
                     <dt class="col-sm-4">Vozilo</dt><dd class="col-sm-8">@Model.Vehicle</dd>
                     <dt class="col-sm-4">Specifikacija</dt><dd class="col-sm-8">@Model.VehicleSpecs</dd>
-                    <dt class="col-sm-4">Vozac</dt><dd class="col-sm-8">@Model.Driver</dd>
-                    <dt class="col-sm-4">Jedinica</dt><dd class="col-sm-8">@Model.OrganizationalUnit</dd>
-                    <dt class="col-sm-4">Termin</dt><dd class="col-sm-8">@Model.DepartureAt.ToString("dd.MM.yyyy HH:mm") - @Model.ReturnAt.ToString("dd.MM.yyyy HH:mm")</dd>
-                    <dt class="col-sm-4">Sluzbeni put</dt><dd class="col-sm-8">@(Model.IsBusinessTrip ? "Da" : "Ne")</dd>
+                    <dt class="col-sm-4">Vozač</dt><dd class="col-sm-8">@Model.Driver</dd>
+                    <dt class="col-sm-4">Ustrojstvena jedinica</dt><dd class="col-sm-8">@Model.OrganizationalUnit</dd>
+                    <dt class="col-sm-4">Sektor</dt><dd class="col-sm-8">@Model.Sector</dd>
+                    <dt class="col-sm-4">Služba</dt><dd class="col-sm-8">@Model.ServiceDepartment</dd>
+                    <dt class="col-sm-4">Polazak</dt><dd class="col-sm-8">@Model.DepartureAt.ToString("dd.MM.yyyy HH:mm")</dd>
+                    <dt class="col-sm-4">Povratak</dt>
+                    <dd class="col-sm-8">@(Model.IsCompleted ? Model.ReturnAt.ToString("dd.MM.yyyy HH:mm") : "Nalog je još otvoren")</dd>
+                    <dt class="col-sm-4">Službeni put</dt><dd class="col-sm-8">@(Model.IsBusinessTrip ? "Da" : "Ne")</dd>
                     <dt class="col-sm-4">Km prije</dt><dd class="col-sm-8">@Model.MileageBefore</dd>
                     <dt class="col-sm-4">Km poslije</dt><dd class="col-sm-8">@(Model.MileageAfter?.ToString() ?? "-")</dd>
-                    <dt class="col-sm-4">Status</dt><dd class="col-sm-8"><span class="badge text-bg-@ViewHelpers.BadgeClass(Model.Status)">@Model.Status</span></dd>
+                    <dt class="col-sm-4">Status</dt><dd class="col-sm-8"><span class="app-status-badge app-status-@ViewHelpers.BadgeClass(Model.Status)">@Model.Status</span></dd>
                     <dt class="col-sm-4">Kreirao</dt><dd class="col-sm-8">@Model.CreatedBy</dd>
                     <dt class="col-sm-4">Napomena</dt><dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Note) ? "-" : Model.Note)</dd>
                 </dl>
@@ -35,20 +41,29 @@
     <div class="col-lg-5">
         <div class="card shadow-sm">
             <div class="card-body">
-                <h2 class="h5 mb-3">Zakljucivanje naloga</h2>
-                @if (Model.Status == "Aktivan")
+                <h2 class="h5 mb-3">Zaključivanje naloga</h2>
+                @if (!Model.IsCompleted)
                 {
+                    <div class="alert alert-light border mb-3">
+                        Vrijeme završetka upisat će se automatski kada zaključiš nalog.
+                    </div>
                     <form asp-action="Complete" method="post">
                         <input asp-for="CompleteOrder.OrderId" type="hidden" />
                         <input asp-for="CompleteOrder.OrderNumber" type="hidden" />
-                        <div class="mb-3"><label asp-for="CompleteOrder.MileageAfter" class="form-label"></label><input asp-for="CompleteOrder.MileageAfter" class="form-control" /></div>
-                        <div class="mb-3"><label asp-for="CompleteOrder.Note" class="form-label"></label><textarea asp-for="CompleteOrder.Note" class="form-control" rows="3"></textarea></div>
-                        <button type="submit" class="btn btn-primary">Zavrsi nalog</button>
+                        <div class="mb-3">
+                            <label asp-for="CompleteOrder.MileageAfter" class="form-label"></label>
+                            <input asp-for="CompleteOrder.MileageAfter" class="form-control" />
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="CompleteOrder.Note" class="form-label"></label>
+                            <textarea asp-for="CompleteOrder.Note" class="form-control" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Završi nalog</button>
                     </form>
                 }
                 else
                 {
-                    <p class="text-muted mb-0">Nalog je vec zavrsen.</p>
+                    <p class="text-muted mb-0">Nalog je završen @Model.ReturnAt.ToString("dd.MM.yyyy HH:mm").</p>
                 }
             </div>
         </div>

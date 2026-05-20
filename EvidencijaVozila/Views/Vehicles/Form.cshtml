@@ -3,10 +3,12 @@
     ViewData["Title"] = Model.Id.HasValue ? "Uredi vozilo" : "Dodaj vozilo";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h2 mb-1">@ViewData["Title"]</h1>
-        <p class="text-muted mb-0">Unos tehnickih i operativnih podataka vozila.</p>
+<div class="d-flex justify-content-between align-items-center mb-4 app-page-head">
+    <div class="app-page-head-main">
+        <a asp-controller="Dashboard" asp-action="Index" class="app-home-back" aria-label="Povratak na početnu">&larr;</a>
+        <div>
+            <h1 class="h2 mb-0">@ViewData["Title"]</h1>
+        </div>
     </div>
     <a asp-action="Index" class="btn btn-outline-secondary">Natrag</a>
 </div>
@@ -16,17 +18,51 @@
         <form asp-action="@(Model.Id.HasValue ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post">
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
             <div class="row g-3">
-                <div class="col-md-4"><label asp-for="RegistrationNumber" class="form-label"></label><input asp-for="RegistrationNumber" class="form-control" /></div>
-                <div class="col-md-8"><label asp-for="BrandModel" class="form-label"></label><input asp-for="BrandModel" class="form-control" /></div>
-                <div class="col-md-3"><label asp-for="VehicleType" class="form-label"></label><select asp-for="VehicleType" asp-items="Html.GetEnumSelectList<VehicleType>()" class="form-select"></select></div>
-                <div class="col-md-3"><label asp-for="ServiceIntervalKm" class="form-label"></label><input asp-for="ServiceIntervalKm" class="form-control" /></div>
-                <div class="col-md-3"><label asp-for="CurrentTires" class="form-label"></label><input asp-for="CurrentTires" class="form-control" /></div>
-                <div class="col-md-3"><label asp-for="PurchasePrice" class="form-label"></label><input asp-for="PurchasePrice" class="form-control" /></div>
-                <div class="col-md-4"><label asp-for="FuelType" class="form-label"></label><select asp-for="FuelType" asp-items="Html.GetEnumSelectList<FuelType>()" class="form-select"></select></div>
-                <div class="col-md-4"><label asp-for="TransmissionType" class="form-label"></label><select asp-for="TransmissionType" asp-items="Html.GetEnumSelectList<TransmissionType>()" class="form-select"></select></div>
-                <div class="col-md-4"><label asp-for="CurrentMileage" class="form-label"></label><input asp-for="CurrentMileage" class="form-control" /></div>
-                <div class="col-md-6"><label asp-for="Status" class="form-label"></label><select asp-for="Status" asp-items="Html.GetEnumSelectList<VehicleStatus>()" class="form-select"></select></div>
-                <div class="col-md-6"><div class="form-check mt-4 pt-2"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div></div>
+                <div class="col-md-4">
+                    <label asp-for="RegistrationNumber" class="form-label"></label>
+                    <input asp-for="RegistrationNumber" class="form-control" />
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="BrandModel" class="form-label"></label>
+                    <input asp-for="BrandModel" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="VehicleType" class="form-label"></label>
+                    <select asp-for="VehicleType" asp-items="Html.GetEnumSelectList<VehicleType>()" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="CurrentTires" class="form-label"></label>
+                    <select asp-for="CurrentTires" class="form-select">
+                        <option value="">Odaberi gume</option>
+                        <option value="Ljetne">Ljetne</option>
+                        <option value="Zimske">Zimske</option>
+                        <option value="Cjelogodišnje">Cjelogodišnje</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="TireChangeNote" class="form-label"></label>
+                    <input asp-for="TireChangeNote" class="form-control" placeholder="npr. 15.05.2026." />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="CurrentMileage" class="form-label"></label>
+                    <input asp-for="CurrentMileage" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="FuelType" class="form-label"></label>
+                    <select asp-for="FuelType" asp-items="Html.GetEnumSelectList<FuelType>()" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="TransmissionType" class="form-label"></label>
+                    <select asp-for="TransmissionType" asp-items="Html.GetEnumSelectList<TransmissionType>()" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="PurchasePrice" class="form-label"></label>
+                    <input asp-for="PurchasePrice" asp-format="{0:0}" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Status" class="form-label"></label>
+                    <select asp-for="Status" asp-items="Html.GetEnumSelectList<VehicleStatus>()" class="form-select js-status-select"></select>
+                </div>
             </div>
             <div class="mt-4">
                 <button type="submit" class="btn btn-primary">Spremi</button>
@@ -37,4 +73,20 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const statusSelect = document.querySelector('.js-status-select');
+            if (!statusSelect) {
+                return;
+            }
+
+            const syncStatusStyle = () => {
+                const selectedText = statusSelect.options[statusSelect.selectedIndex]?.text?.toLowerCase() ?? '';
+                statusSelect.classList.toggle('status-rashod', selectedText.includes('rashod'));
+            };
+
+            statusSelect.addEventListener('change', syncStatusStyle);
+            syncStatusStyle();
+        })();
+    </script>
 }

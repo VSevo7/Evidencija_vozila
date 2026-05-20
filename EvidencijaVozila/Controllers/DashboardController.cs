@@ -10,47 +10,61 @@ namespace EvidencijaVozila.Controllers;
 [Authorize]
 public class DashboardController(ApplicationDbContext context) : Controller
 {
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? registrationQuery)
     {
-        var vehicles = await context.Vehicles.AsNoTracking().ToListAsync();
-        var orders = await context.VehicleOrders
-            .AsNoTracking()
-            .Include(x => x.Vehicle)
-            .Include(x => x.Driver)
-            .OrderByDescending(x => x.CreatedAt)
-            .Take(8)
-            .ToListAsync();
-
         var model = new DashboardViewModel
         {
-            TotalVehicles = vehicles.Count,
-            AvailableVehicles = vehicles.Count(x => x.IsActive && x.Status == VehicleStatus.Slobodno),
+            TotalVehicles = await context.Vehicles.CountAsync(),
+            AvailableVehicles = await context.Vehicles.CountAsync(x => x.Status == VehicleStatus.Aktivno),
             ActiveOrders = await context.VehicleOrders.CountAsync(x => x.Status == OrderStatus.Aktivan),
             TotalUsers = await context.Users.CountAsync(),
-            ServiceAlerts = vehicles
-                .Where(x => x.IsActive && x.ServiceIntervalKm > 0)
-                .Select(x => new ServiceAlertViewModel
-                {
-                    RegistrationNumber = x.RegistrationNumber,
-                    BrandModel = x.BrandModel,
-                    CurrentMileage = x.CurrentMileage,
-                    ServiceIntervalKm = x.ServiceIntervalKm,
-                    KmUntilService = x.ServiceIntervalKm - (x.CurrentMileage % x.ServiceIntervalKm)
-                })
-                .OrderBy(x => x.KmUntilService)
-                .Take(5)
-                .ToList(),
-            RecentOrders = orders.Select(x => new RecentOrderViewModel
-            {
-                Id = x.Id,
-                OrderNumber = x.OrderNumber,
-                Vehicle = $"{x.Vehicle!.RegistrationNumber} / {x.Vehicle.BrandModel}",
-                Driver = x.Driver!.FullName,
-                DepartureAt = x.DepartureAt,
-                ReturnAt = x.ReturnAt,
-                Status = x.Status.ToDisplay()
-            }).ToList()
+            VehicleSearchTerm = InputNormalizer.NormalizeOptional(registrationQuery)
         };
+
+        var normalizedRegistrationQuery = InputNormalizer.NormalizeRegistrationLookup(model.VehicleSearchTerm);
+        if (string.IsNullOrWhiteSpace(normalizedRegistrationQuery))
+        {
+            return View(model);
+        }
+
+        var searchResults = await context.Vehicles
+            .AsNoTracking()
+            .Where(x => x.RegistrationNumber
+                .Replace("-", string.Empty)
+                .Replace(" ", string.Empty)
+                .ToUpper() == normalizedRegistrationQuery)
+            .OrderBy(x => x.RegistrationNumber)
+            .Select(x => new
+            {
+                x.Id,
+                x.RegistrationNumber,
+                x.BrandModel,
+                x.VehicleType,
+                x.FuelType,
+                x.TransmissionType,
+                x.CurrentTires,
+                x.CurrentMileage,
+                x.Status,
+                ActiveOrderNumber = context.VehicleOrders
+                    .Where(o => o.VehicleId == x.Id && o.Status == OrderStatus.Aktivan)
+                    .Select(o => o.OrderNumber)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
+
+        model.VehicleSearchResults = searchResults
+            .Select(x => new DashboardVehicleSearchResultViewModel
+            {
+                RegistrationNumber = x.RegistrationNumber,
+                BrandModel = x.BrandModel,
+                Specification = $"{x.VehicleType.ToDisplay()} / {x.FuelType.ToDisplay()} / {x.TransmissionType.ToDisplay()} / {x.CurrentTires}",
+                CurrentMileage = x.CurrentMileage,
+                Status = !string.IsNullOrWhiteSpace(x.ActiveOrderNumber)
+                    ? "Izdano"
+                    : x.Status.ToDisplay(),
+                ActiveOrderNumber = x.ActiveOrderNumber
+            })
+            .ToList();
 
         return View(model);
     }

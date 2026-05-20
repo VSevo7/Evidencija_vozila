@@ -25,8 +25,8 @@ public class VehiclesController(ApplicationDbContext context) : Controller
             query = query.Where(x => x.VehicleType == vehicleType.Value);
         }
 
-        ViewBag.SelectedStatus = status;
-        ViewBag.SelectedVehicleType = vehicleType;
+        ViewBag.SelectedStatus = status.HasValue ? ((int)status.Value).ToString() : null;
+        ViewBag.SelectedVehicleType = vehicleType.HasValue ? ((int)vehicleType.Value).ToString() : null;
 
         var vehicles = await query
             .OrderBy(x => x.RegistrationNumber)
@@ -35,14 +35,61 @@ public class VehiclesController(ApplicationDbContext context) : Controller
                 Id = x.Id,
                 RegistrationNumber = x.RegistrationNumber,
                 BrandModel = x.BrandModel,
-                Specification = $"{x.VehicleType.ToDisplay()} / {x.FuelType.ToDisplay()} / {x.TransmissionType.ToDisplay()} / {x.CurrentTires}",
                 CurrentMileage = x.CurrentMileage,
-                Status = x.Status.ToDisplay(),
-                IsActive = x.IsActive
+                Status = x.Status.ToDisplay()
             })
             .ToListAsync();
 
         return View(vehicles);
+    }
+
+    public async Task<IActionResult> Details(int id)
+    {
+        var vehicle = await context.Vehicles
+            .AsNoTracking()
+            .Where(x => x.Id == id)
+            .Select(x => new
+            {
+                x.Id,
+                x.RegistrationNumber,
+                x.BrandModel,
+                VehicleType = x.VehicleType.ToDisplay(),
+                FuelType = x.FuelType.ToDisplay(),
+                TransmissionType = x.TransmissionType.ToDisplay(),
+                x.CurrentTires,
+                x.TireChangeNote,
+                x.CurrentMileage,
+                x.PurchasePrice,
+                Status = x.Status.ToDisplay(),
+                ActiveOrderNumber = context.VehicleOrders
+                    .Where(o => o.VehicleId == x.Id && o.Status == OrderStatus.Aktivan)
+                    .Select(o => o.OrderNumber)
+                    .FirstOrDefault()
+            })
+            .FirstOrDefaultAsync();
+
+        if (vehicle is null)
+        {
+            return NotFound();
+        }
+
+        var model = new VehicleDetailsViewModel
+        {
+            Id = vehicle.Id,
+            RegistrationNumber = vehicle.RegistrationNumber,
+            BrandModel = vehicle.BrandModel,
+            VehicleType = vehicle.VehicleType,
+            FuelType = vehicle.FuelType,
+            TransmissionType = vehicle.TransmissionType,
+            CurrentTires = vehicle.CurrentTires,
+            TireChangeNote = vehicle.TireChangeNote,
+            CurrentMileage = vehicle.CurrentMileage,
+            PurchasePrice = vehicle.PurchasePrice,
+            Status = string.IsNullOrWhiteSpace(vehicle.ActiveOrderNumber) ? vehicle.Status : "Izdano",
+            ActiveOrderNumber = vehicle.ActiveOrderNumber
+        };
+
+        return View(model);
     }
 
     [Authorize(Roles = nameof(UserRole.Administrator))]
@@ -50,7 +97,7 @@ public class VehiclesController(ApplicationDbContext context) : Controller
     {
         return View("Form", new VehicleFormViewModel
         {
-            Status = VehicleStatus.Slobodno,
+            Status = VehicleStatus.Aktivno,
             IsActive = true
         });
     }
@@ -60,9 +107,17 @@ public class VehiclesController(ApplicationDbContext context) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(VehicleFormViewModel model)
     {
-        if (await context.Vehicles.AnyAsync(x => x.RegistrationNumber == model.RegistrationNumber))
+        var normalizedRegistration = InputNormalizer.NormalizeRegistrationLookup(model.RegistrationNumber);
+
+        if (model.Status == VehicleStatus.Zauzeto)
         {
-            ModelState.AddModelError(nameof(model.RegistrationNumber), "Registracijska oznaka vec postoji.");
+            ModelState.AddModelError(nameof(model.Status), "Novo vozilo ne može biti u statusu 'Zauzeto' bez aktivnog naloga.");
+        }
+
+        if (await context.Vehicles.AnyAsync(x =>
+                x.RegistrationNumber.Replace("-", string.Empty).Replace(" ", string.Empty).ToUpper() == normalizedRegistration))
+        {
+            ModelState.AddModelError(nameof(model.RegistrationNumber), "Registracijska oznaka već postoji.");
         }
 
         if (!ModelState.IsValid)
@@ -72,22 +127,22 @@ public class VehiclesController(ApplicationDbContext context) : Controller
 
         var vehicle = new Vehicle
         {
-            RegistrationNumber = model.RegistrationNumber.ToUpperInvariant(),
-            BrandModel = model.BrandModel,
+            RegistrationNumber = InputNormalizer.NormalizeRegistrationForStorage(model.RegistrationNumber),
+            BrandModel = model.BrandModel.Trim(),
             VehicleType = model.VehicleType,
-            ServiceIntervalKm = model.ServiceIntervalKm,
-            CurrentTires = model.CurrentTires,
+            CurrentTires = model.CurrentTires.Trim(),
+            TireChangeNote = InputNormalizer.NormalizeOptional(model.TireChangeNote),
             PurchasePrice = model.PurchasePrice,
             FuelType = model.FuelType,
             TransmissionType = model.TransmissionType,
             CurrentMileage = model.CurrentMileage,
             Status = model.Status,
-            IsActive = model.IsActive
+            IsActive = model.Status != VehicleStatus.Rashod
         };
 
         context.Vehicles.Add(vehicle);
         await context.SaveChangesAsync();
-        TempData["Success"] = "Vozilo je uspjesno dodano.";
+        TempData["Success"] = "Vozilo je uspješno dodano.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -106,8 +161,8 @@ public class VehiclesController(ApplicationDbContext context) : Controller
             RegistrationNumber = vehicle.RegistrationNumber,
             BrandModel = vehicle.BrandModel,
             VehicleType = vehicle.VehicleType,
-            ServiceIntervalKm = vehicle.ServiceIntervalKm,
             CurrentTires = vehicle.CurrentTires,
+            TireChangeNote = vehicle.TireChangeNote,
             PurchasePrice = vehicle.PurchasePrice,
             FuelType = vehicle.FuelType,
             TransmissionType = vehicle.TransmissionType,
@@ -128,9 +183,24 @@ public class VehiclesController(ApplicationDbContext context) : Controller
             return NotFound();
         }
 
-        if (await context.Vehicles.AnyAsync(x => x.RegistrationNumber == model.RegistrationNumber && x.Id != id))
+        var normalizedRegistration = InputNormalizer.NormalizeRegistrationLookup(model.RegistrationNumber);
+        var hasActiveOrder = await context.VehicleOrders.AnyAsync(x => x.VehicleId == id && x.Status == OrderStatus.Aktivan);
+
+        if (hasActiveOrder && model.Status != VehicleStatus.Zauzeto)
         {
-            ModelState.AddModelError(nameof(model.RegistrationNumber), "Registracijska oznaka vec postoji.");
+            ModelState.AddModelError(nameof(model.Status), "Vozilo s aktivnim nalogom mora ostati u statusu 'Zauzeto'.");
+        }
+
+        if (!hasActiveOrder && model.Status == VehicleStatus.Zauzeto)
+        {
+            ModelState.AddModelError(nameof(model.Status), "Status 'Zauzeto' postavlja se automatski kada postoji aktivan nalog.");
+        }
+
+        if (await context.Vehicles.AnyAsync(x =>
+                x.Id != id &&
+                x.RegistrationNumber.Replace("-", string.Empty).Replace(" ", string.Empty).ToUpper() == normalizedRegistration))
+        {
+            ModelState.AddModelError(nameof(model.RegistrationNumber), "Registracijska oznaka već postoji.");
         }
 
         if (!ModelState.IsValid)
@@ -138,20 +208,20 @@ public class VehiclesController(ApplicationDbContext context) : Controller
             return View("Form", model);
         }
 
-        vehicle.RegistrationNumber = model.RegistrationNumber.ToUpperInvariant();
-        vehicle.BrandModel = model.BrandModel;
+        vehicle.RegistrationNumber = InputNormalizer.NormalizeRegistrationForStorage(model.RegistrationNumber);
+        vehicle.BrandModel = model.BrandModel.Trim();
         vehicle.VehicleType = model.VehicleType;
-        vehicle.ServiceIntervalKm = model.ServiceIntervalKm;
-        vehicle.CurrentTires = model.CurrentTires;
+        vehicle.CurrentTires = model.CurrentTires.Trim();
+        vehicle.TireChangeNote = InputNormalizer.NormalizeOptional(model.TireChangeNote);
         vehicle.PurchasePrice = model.PurchasePrice;
         vehicle.FuelType = model.FuelType;
         vehicle.TransmissionType = model.TransmissionType;
         vehicle.CurrentMileage = model.CurrentMileage;
         vehicle.Status = model.Status;
-        vehicle.IsActive = model.IsActive;
+        vehicle.IsActive = model.Status != VehicleStatus.Rashod;
 
         await context.SaveChangesAsync();
-        TempData["Success"] = "Vozilo je uspjesno azurirano.";
+        TempData["Success"] = "Vozilo je uspješno ažurirano.";
         return RedirectToAction(nameof(Index));
     }
 }

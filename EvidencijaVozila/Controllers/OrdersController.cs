@@ -12,13 +12,29 @@ namespace EvidencijaVozila.Controllers;
 [Authorize(Roles = nameof(UserRole.Administrator))]
 public class OrdersController(ApplicationDbContext context) : Controller
 {
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? orderNumber)
     {
-        var orders = await context.VehicleOrders
+        var trimmedOrderNumber = InputNormalizer.NormalizeOptional(orderNumber);
+        var normalizedOrderNumber = string.IsNullOrWhiteSpace(trimmedOrderNumber)
+            ? null
+            : InputNormalizer.NormalizeOrderNumber(trimmedOrderNumber);
+
+        var query = context.VehicleOrders
             .AsNoTracking()
             .Include(x => x.Vehicle)
             .Include(x => x.Driver)
+                .ThenInclude(x => x!.Sector)
+            .Include(x => x.Driver)
+                .ThenInclude(x => x!.ServiceDepartment)
             .Include(x => x.OrganizationalUnit)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(normalizedOrderNumber))
+        {
+            query = query.Where(x => x.OrderNumber.Trim().ToUpper() == normalizedOrderNumber);
+        }
+
+        var orders = await query
             .OrderByDescending(x => x.CreatedAt)
             .Select(x => new OrderIndexItemViewModel
             {
@@ -27,11 +43,18 @@ public class OrdersController(ApplicationDbContext context) : Controller
                 Vehicle = $"{x.Vehicle!.RegistrationNumber} / {x.Vehicle.BrandModel}",
                 Driver = x.Driver!.FullName,
                 OrganizationalUnit = x.OrganizationalUnit!.Name,
+                Sector = x.Driver.Sector != null ? x.Driver.Sector.Name : "-",
+                ServiceDepartment = x.Driver.ServiceDepartment != null ? x.Driver.ServiceDepartment.Name : "-",
                 DepartureAt = x.DepartureAt,
                 ReturnAt = x.ReturnAt,
+                IsCompleted = x.Status == OrderStatus.Zavrsen,
                 Status = x.Status.ToDisplay()
             })
             .ToListAsync();
+
+        ViewBag.OrderSearchTerm = trimmedOrderNumber;
+        ViewBag.OrderSearchPerformed = !string.IsNullOrWhiteSpace(trimmedOrderNumber);
+        ViewBag.OrderSearchMissing = !string.IsNullOrWhiteSpace(trimmedOrderNumber) && orders.Count == 0;
 
         return View(orders);
     }
@@ -40,10 +63,11 @@ public class OrdersController(ApplicationDbContext context) : Controller
     {
         var model = new OrderFormViewModel
         {
-            DepartureAt = DateTime.Today.AddHours(8),
-            ReturnAt = DateTime.Today.AddHours(16)
+            DepartureAt = DateTime.Today.AddHours(8)
         };
+
         await PopulateDropdownsAsync(model);
+        model.MileageBefore = model.VehicleOptions.FirstOrDefault()?.CurrentMileage ?? 0;
         return View(model);
     }
 
@@ -51,40 +75,45 @@ public class OrdersController(ApplicationDbContext context) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(OrderFormViewModel model)
     {
+        await PopulateDropdownsAsync(model);
         await ValidateOrderAsync(model);
 
         if (!ModelState.IsValid)
         {
-            await PopulateDropdownsAsync(model);
             return View(model);
         }
 
+        var vehicle = await context.Vehicles.FindAsync(model.VehicleId);
+        if (vehicle is null)
+        {
+            return NotFound();
+        }
+
+        model.MileageBefore = vehicle.CurrentMileage;
+
         var order = new VehicleOrder
         {
-            OrderNumber = model.OrderNumber,
+            OrderNumber = InputNormalizer.NormalizeOrderNumber(model.OrderNumber),
             VehicleId = model.VehicleId,
             DriverId = model.DriverId,
             OrganizationalUnitId = model.OrganizationalUnitId,
             IsBusinessTrip = model.IsBusinessTrip,
             DepartureAt = model.DepartureAt,
-            ReturnAt = model.ReturnAt,
+            ReturnAt = model.DepartureAt,
             MileageBefore = model.MileageBefore,
-            Note = model.Note,
+            Note = InputNormalizer.NormalizeOptional(model.Note),
             CreatedAt = DateTime.Now,
             CreatedByUserId = User.CurrentUserId(),
             Status = OrderStatus.Aktivan
         };
 
-        var vehicle = await context.Vehicles.FindAsync(model.VehicleId);
-        if (vehicle is not null)
-        {
-            vehicle.Status = VehicleStatus.Zauzeto;
-        }
+        vehicle.Status = VehicleStatus.Zauzeto;
+        vehicle.IsActive = true;
 
         context.VehicleOrders.Add(order);
         await context.SaveChangesAsync();
 
-        TempData["Success"] = "Nalog je uspjesno kreiran.";
+        TempData["Success"] = "Nalog je uspješno kreiran.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -94,6 +123,9 @@ public class OrdersController(ApplicationDbContext context) : Controller
             .AsNoTracking()
             .Include(x => x.Vehicle)
             .Include(x => x.Driver)
+                .ThenInclude(x => x!.Sector)
+            .Include(x => x.Driver)
+                .ThenInclude(x => x!.ServiceDepartment)
             .Include(x => x.CreatedByUser)
             .Include(x => x.OrganizationalUnit)
             .FirstOrDefaultAsync(x => x.Id == id);
@@ -110,9 +142,12 @@ public class OrdersController(ApplicationDbContext context) : Controller
             Vehicle = $"{order.Vehicle!.RegistrationNumber} / {order.Vehicle.BrandModel}",
             Driver = order.Driver!.FullName,
             OrganizationalUnit = order.OrganizationalUnit!.Name,
+            Sector = order.Driver.Sector != null ? order.Driver.Sector.Name : "-",
+            ServiceDepartment = order.Driver.ServiceDepartment != null ? order.Driver.ServiceDepartment.Name : "-",
             IsBusinessTrip = order.IsBusinessTrip,
             DepartureAt = order.DepartureAt,
             ReturnAt = order.ReturnAt,
+            IsCompleted = order.Status == OrderStatus.Zavrsen,
             MileageBefore = order.MileageBefore,
             MileageAfter = order.MileageAfter,
             Note = order.Note,
@@ -133,7 +168,7 @@ public class OrdersController(ApplicationDbContext context) : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Complete(CompleteOrderViewModel model)
+    public async Task<IActionResult> Complete([Bind(Prefix = "CompleteOrder")] CompleteOrderViewModel model)
     {
         var order = await context.VehicleOrders
             .Include(x => x.Vehicle)
@@ -146,31 +181,43 @@ public class OrdersController(ApplicationDbContext context) : Controller
 
         if (model.MileageAfter < order.MileageBefore)
         {
-            TempData["Error"] = "Povratna kilometraza ne moze biti manja od pocetne.";
+            TempData["Error"] = "Povratna kilometraža ne može biti manja od početne.";
             return RedirectToAction(nameof(Details), new { id = model.OrderId });
         }
 
         order.MileageAfter = model.MileageAfter;
-        order.Note = model.Note;
+        order.Note = InputNormalizer.NormalizeOptional(model.Note);
+        order.ReturnAt = DateTime.Now;
         order.Status = OrderStatus.Zavrsen;
 
         if (order.Vehicle is not null)
         {
             order.Vehicle.CurrentMileage = model.MileageAfter;
-            order.Vehicle.Status = VehicleStatus.Slobodno;
+            order.Vehicle.Status = VehicleStatus.Aktivno;
+            order.Vehicle.IsActive = true;
         }
 
         await context.SaveChangesAsync();
-        TempData["Success"] = "Nalog je zavrsen i vozilo je vraceno u evidenciju.";
+        TempData["Success"] = "Nalog je završen i vozilo je vraćeno u evidenciju.";
         return RedirectToAction(nameof(Details), new { id = model.OrderId });
     }
 
     private async Task PopulateDropdownsAsync(OrderFormViewModel model)
     {
-        model.Vehicles = await context.Vehicles
-            .Where(x => x.IsActive)
+        model.OrganizationalUnitId = await context.OrganizationalUnits
+            .Select(x => x.Id)
+            .FirstOrDefaultAsync();
+        model.OrganizationalUnitName = "Ministarstvo unutarnjih poslova";
+
+        model.VehicleOptions = await context.Vehicles
+            .Where(x => x.Status == VehicleStatus.Aktivno)
             .OrderBy(x => x.RegistrationNumber)
-            .Select(x => new SelectListItem($"{x.RegistrationNumber} / {x.BrandModel}", x.Id.ToString()))
+            .Select(x => new OrderVehicleOptionViewModel
+            {
+                Id = x.Id,
+                Label = $"{x.RegistrationNumber} / {x.BrandModel}",
+                CurrentMileage = x.CurrentMileage
+            })
             .ToListAsync();
 
         model.Drivers = await context.Users
@@ -179,40 +226,48 @@ public class OrdersController(ApplicationDbContext context) : Controller
             .ThenBy(x => x.FirstName)
             .Select(x => new SelectListItem(x.FullName, x.Id.ToString()))
             .ToListAsync();
-
-        model.OrganizationalUnits = await context.OrganizationalUnits
-            .OrderBy(x => x.Name)
-            .Select(x => new SelectListItem(x.Name, x.Id.ToString()))
-            .ToListAsync();
     }
 
     private async Task ValidateOrderAsync(OrderFormViewModel model)
     {
-        if (await context.VehicleOrders.AnyAsync(x => x.OrderNumber == model.OrderNumber))
-        {
-            ModelState.AddModelError(nameof(model.OrderNumber), "Broj naloga vec postoji.");
-        }
+        var normalizedOrderNumber = InputNormalizer.NormalizeOrderNumber(model.OrderNumber);
 
-        var vehicle = await context.Vehicles.FindAsync(model.VehicleId);
-        if (vehicle is null || !vehicle.IsActive || vehicle.Status == VehicleStatus.VanUpotrebe)
+        if (!model.VehicleOptions.Any())
         {
-            ModelState.AddModelError(nameof(model.VehicleId), "Odabrano vozilo nije raspolozivo.");
+            ModelState.AddModelError(string.Empty, "Trenutno nema raspoloživih vozila.");
             return;
         }
 
-        if (model.MileageBefore < vehicle.CurrentMileage)
+        if (await context.VehicleOrders.AnyAsync(x => x.OrderNumber.Trim().ToUpper() == normalizedOrderNumber))
         {
-            ModelState.AddModelError(nameof(model.MileageBefore), "Pocetna kilometraza ne moze biti manja od trenutne kilometraze vozila.");
+            ModelState.AddModelError(nameof(model.OrderNumber), "Broj naloga već postoji.");
         }
 
-        var overlapExists = await context.VehicleOrders.AnyAsync(x =>
-            x.VehicleId == model.VehicleId &&
-            x.Status == OrderStatus.Aktivan &&
-            !(model.ReturnAt <= x.DepartureAt || model.DepartureAt >= x.ReturnAt));
-
-        if (overlapExists)
+        var vehicle = await context.Vehicles.FindAsync(model.VehicleId);
+        if (vehicle is null || vehicle.Status != VehicleStatus.Aktivno)
         {
-            ModelState.AddModelError(nameof(model.VehicleId), "Odabrano vozilo je vec zauzeto u trazenom terminu.");
+            ModelState.AddModelError(nameof(model.VehicleId), "Odabrano vozilo nije raspoloživo.");
+            return;
+        }
+
+        var driver = await context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == model.DriverId);
+
+        if (driver is null || driver.Status != UserStatus.Aktivan)
+        {
+            ModelState.AddModelError(nameof(model.DriverId), "Odabrani vozač nije dostupan za nalog.");
+        }
+
+        model.MileageBefore = vehicle.CurrentMileage;
+
+        var activeOrderExists = await context.VehicleOrders.AnyAsync(x =>
+            x.VehicleId == model.VehicleId &&
+            x.Status == OrderStatus.Aktivan);
+
+        if (activeOrderExists)
+        {
+            ModelState.AddModelError(nameof(model.VehicleId), "Odabrano vozilo je već zauzeto.");
         }
     }
 }

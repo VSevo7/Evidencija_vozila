@@ -1,34 +1,96 @@
 @model IEnumerable<EvidencijaVozila.ViewModels.Orders.OrderIndexItemViewModel>
 @{
     ViewData["Title"] = "Nalozi";
+    var orderSearchTerm = ViewBag.OrderSearchTerm as string;
+    var orderSearchPerformed = ViewBag.OrderSearchPerformed is true;
+    var orderSearchMissing = ViewBag.OrderSearchMissing is true;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h2 mb-1">Nalozi</h1>
-        <p class="text-muted mb-0">Pregled aktivnih i zavrsenih naloga za upotrebu vozila.</p>
+<div class="d-flex justify-content-between align-items-center mb-4 app-page-head">
+    <div class="app-page-head-main">
+        <a asp-controller="Dashboard" asp-action="Index" class="app-home-back" aria-label="Povratak na početnu">&larr;</a>
+        <div>
+            <h1 class="h2 mb-0">Nalozi</h1>
+        </div>
     </div>
     <a asp-action="Create" class="btn btn-primary">Novi nalog</a>
 </div>
 
-<div class="card shadow-sm">
-    <div class="table-responsive">
-        <table class="table align-middle mb-0">
-            <thead><tr><th>Broj naloga</th><th>Vozilo</th><th>Vozac</th><th>Jedinica</th><th>Termin</th><th>Status</th><th class="text-end">Detalji</th></tr></thead>
-            <tbody>
-            @foreach (var order in Model)
-            {
-                <tr>
-                    <td>@order.OrderNumber</td>
-                    <td>@order.Vehicle</td>
-                    <td>@order.Driver</td>
-                    <td>@order.OrganizationalUnit</td>
-                    <td>@order.DepartureAt.ToString("dd.MM.yyyy HH:mm")<br /><small>@order.ReturnAt.ToString("dd.MM.yyyy HH:mm")</small></td>
-                    <td><span class="badge text-bg-@ViewHelpers.BadgeClass(order.Status)">@order.Status</span></td>
-                    <td class="text-end"><a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">Detalji</a></td>
-                </tr>
-            }
-            </tbody>
-        </table>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <label for="orderNumber" class="form-label">Pretraga naloga</label>
+                <input id="orderNumber"
+                       name="orderNumber"
+                       value="@orderSearchTerm"
+                       class="form-control"
+                       placeholder="Upiši broj naloga" />
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-outline-primary w-100">Pretraži nalog</button>
+            </div>
+        </form>
     </div>
 </div>
+
+@if (orderSearchMissing)
+{
+    <div class="alert alert-danger mb-4">Nalog ne postoji.</div>
+}
+
+@if (Model.Any())
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Broj naloga</th>
+                        <th>Vozilo</th>
+                        <th>Vozač</th>
+                        <th>Sektor</th>
+                        <th>Služba</th>
+                        <th>Vrijeme</th>
+                        <th>Status</th>
+                        <th class="text-end">Detalji</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model)
+                    {
+                        <tr>
+                            <td>@order.OrderNumber</td>
+                            <td>@order.Vehicle</td>
+                            <td>@order.Driver</td>
+                            <td>@order.Sector</td>
+                            <td>@order.ServiceDepartment</td>
+                            <td>
+                                Polazak: @order.DepartureAt.ToString("dd.MM.yyyy HH:mm")
+                                <br />
+                                <small>
+                                    @if (order.IsCompleted)
+                                    {
+                                        @:Povratak: @order.ReturnAt.ToString("dd.MM.yyyy HH:mm")
+                                    }
+                                    else
+                                    {
+                                        @:Povratak: u tijeku
+                                    }
+                                </small>
+                            </td>
+                            <td><span class="app-status-badge app-status-@ViewHelpers.BadgeClass(order.Status)">@order.Status</span></td>
+                            <td class="text-end">
+                                <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">Detalji</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else if (!orderSearchPerformed)
+{
+    <div class="alert alert-light border mb-0">Trenutno nema unesenih naloga.</div>
+}
