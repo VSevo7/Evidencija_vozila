@@ -1,4 +1,4 @@
-@model EvidencijaVozila.ViewModels.Vehicles.VehicleFormViewModel
+﻿@model EvidencijaVozila.ViewModels.Vehicles.VehicleFormViewModel
 @{
     ViewData["Title"] = Model.Id.HasValue ? "Uredi vozilo" : "Dodaj vozilo";
 }
@@ -40,12 +40,12 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label asp-for="TireChangeNote" class="form-label"></label>
-                    <input asp-for="TireChangeNote" class="form-control" placeholder="npr. 15.05.2026." />
-                </div>
-                <div class="col-md-3">
                     <label asp-for="CurrentMileage" class="form-label"></label>
                     <input asp-for="CurrentMileage" type="number" min="0" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Status" class="form-label"></label>
+                    <select asp-for="Status" asp-items="Html.GetEnumSelectList<VehicleStatus>()" class="form-select js-status-select"></select>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="FuelType" class="form-label"></label>
@@ -59,9 +59,42 @@
                     <label asp-for="PurchasePrice" class="form-label"></label>
                     <input asp-for="PurchasePrice" asp-format="{0:0}" type="number" min="0" step="1" class="form-control" />
                 </div>
-                <div class="col-md-6">
-                    <label asp-for="Status" class="form-label"></label>
-                    <select asp-for="Status" asp-items="Html.GetEnumSelectList<VehicleStatus>()" class="form-select js-status-select"></select>
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label mb-0">Evidencija izmjene guma</label>
+                        <button type="button" class="btn btn-sm btn-outline-primary js-add-tire-change">+ Dodaj izmjenu</button>
+                    </div>
+                    <div class="js-tire-change-list">
+                        @for (var i = 0; i < Model.TireChanges.Count; i++)
+                        {
+                            <div class="row g-2 align-items-end mb-3 tire-change-row">
+                                <div class="col-md-4">
+                                    <label class="form-label" for="TireChanges_@(i)__ChangedAt">Datum izmjene</label>
+                                    <input type="date" class="form-control" data-field="ChangedAt" name="TireChanges[@i].ChangedAt" id="TireChanges_@(i)__ChangedAt" value="@(Model.TireChanges[i].ChangedAt?.ToString("yyyy-MM-dd"))" />
+                                    <span asp-validation-for="TireChanges[i].ChangedAt" class="text-danger small" data-field-validation="ChangedAt"></span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="TireChanges_@(i)__TireType">Tip gume</label>
+                                    <select class="form-select" data-field="TireType" name="TireChanges[@i].TireType" id="TireChanges_@(i)__TireType">
+                                        <option value="">Odaberi tip gume</option>
+                                        <option value="Ljetne" selected="@(Model.TireChanges[i].TireType == "Ljetne")">Ljetne</option>
+                                        <option value="Zimske" selected="@(Model.TireChanges[i].TireType == "Zimske")">Zimske</option>
+                                        <option value="Cjelogodišnje" selected="@(Model.TireChanges[i].TireType == "Cjelogodišnje")">Cjelogodišnje</option>
+                                    </select>
+                                    <span asp-validation-for="TireChanges[i].TireType" class="text-danger small" data-field-validation="TireType"></span>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label" for="TireChanges_@(i)__MileageAtChange">Stanje km</label>
+                                    <input type="number" min="0" class="form-control" data-field="MileageAtChange" name="TireChanges[@i].MileageAtChange" id="TireChanges_@(i)__MileageAtChange" value="@(Model.TireChanges[i].MileageAtChange?.ToString())" />
+                                    <span asp-validation-for="TireChanges[i].MileageAtChange" class="text-danger small" data-field-validation="MileageAtChange"></span>
+                                </div>
+                                <div class="col-md-1 d-grid">
+                                    <button type="button" class="btn btn-outline-danger btn-sm js-remove-tire-change">Ukloni</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <p class="text-muted small mb-0 js-no-tire-changes" style="display:@(Model.TireChanges.Count == 0 ? "block" : "none");">Nema evidentiranih izmjena guma.</p>
                 </div>
             </div>
             <div class="mt-4">
@@ -71,22 +104,135 @@
     </div>
 </div>
 
+<script type="text/template" id="tire-change-template">
+    <div class="row g-2 align-items-end mb-3 tire-change-row">
+        <div class="col-md-4">
+            <label class="form-label" for="TireChanges___index___ChangedAt">Datum izmjene</label>
+            <input type="date" class="form-control" data-field="ChangedAt" name="TireChanges[__index__].ChangedAt" id="TireChanges___index___ChangedAt" />
+            <span class="text-danger small field-validation-valid" data-valmsg-for="TireChanges[__index__].ChangedAt" data-field-validation="ChangedAt"></span>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="TireChanges___index___TireType">Tip gume</label>
+            <select class="form-select" data-field="TireType" name="TireChanges[__index__].TireType" id="TireChanges___index___TireType">
+                <option value="">Odaberi tip gume</option>
+                <option value="Ljetne">Ljetne</option>
+                <option value="Zimske">Zimske</option>
+                <option value="Cjelogodišnje">Cjelogodišnje</option>
+            </select>
+            <span class="text-danger small field-validation-valid" data-valmsg-for="TireChanges[__index__].TireType" data-field-validation="TireType"></span>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="TireChanges___index___MileageAtChange">Stanje km</label>
+            <input type="number" min="0" class="form-control" data-field="MileageAtChange" name="TireChanges[__index__].MileageAtChange" id="TireChanges___index___MileageAtChange" />
+            <span class="text-danger small field-validation-valid" data-valmsg-for="TireChanges[__index__].MileageAtChange" data-field-validation="MileageAtChange"></span>
+        </div>
+        <div class="col-md-1 d-grid">
+            <button type="button" class="btn btn-outline-danger btn-sm js-remove-tire-change">Ukloni</button>
+        </div>
+    </div>
+</script>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
         (() => {
             const statusSelect = document.querySelector('.js-status-select');
-            if (!statusSelect) {
-                return;
-            }
+            const list = document.querySelector('.js-tire-change-list');
+            const addButton = document.querySelector('.js-add-tire-change');
+            const emptyState = document.querySelector('.js-no-tire-changes');
+            const template = document.getElementById('tire-change-template');
 
             const syncStatusStyle = () => {
+                if (!statusSelect) {
+                    return;
+                }
+
                 const selectedText = statusSelect.options[statusSelect.selectedIndex]?.text?.toLowerCase() ?? '';
                 statusSelect.classList.toggle('status-rashod', selectedText.includes('rashod'));
             };
 
-            statusSelect.addEventListener('change', syncStatusStyle);
-            syncStatusStyle();
+            const updateEmptyState = () => {
+                if (!emptyState || !list) {
+                    return;
+                }
+
+                emptyState.style.display = list.querySelectorAll('.tire-change-row').length === 0 ? 'block' : 'none';
+            };
+
+            const reindexRows = () => {
+                if (!list) {
+                    return;
+                }
+
+                const rows = list.querySelectorAll('.tire-change-row');
+                rows.forEach((row, index) => {
+                    row.querySelectorAll('[data-field]').forEach(field => {
+                        const fieldName = field.getAttribute('data-field');
+                        if (!fieldName) {
+                            return;
+                        }
+
+                        field.setAttribute('name', `TireChanges[${index}].${fieldName}`);
+                        field.setAttribute('id', `TireChanges_${index}__${fieldName}`);
+                    });
+
+                    row.querySelectorAll('label[for]').forEach(label => {
+                        const field = label.parentElement?.querySelector('[data-field]');
+                        const fieldName = field?.getAttribute('data-field');
+                        if (!fieldName) {
+                            return;
+                        }
+
+                        label.setAttribute('for', `TireChanges_${index}__${fieldName}`);
+                    });
+
+                    row.querySelectorAll('[data-field-validation]').forEach(span => {
+                        const fieldName = span.getAttribute('data-field-validation');
+                        if (!fieldName) {
+                            return;
+                        }
+
+                        span.setAttribute('data-valmsg-for', `TireChanges[${index}].${fieldName}`);
+                    });
+                });
+            };
+
+            const addRow = () => {
+                if (!list || !template) {
+                    return;
+                }
+
+                const index = list.querySelectorAll('.tire-change-row').length;
+                const markup = template.innerHTML.replaceAll('__index__', index.toString());
+                list.insertAdjacentHTML('beforeend', markup);
+                reindexRows();
+                updateEmptyState();
+            };
+
+            if (statusSelect) {
+                statusSelect.addEventListener('change', syncStatusStyle);
+                syncStatusStyle();
+            }
+
+            if (addButton) {
+                addButton.addEventListener('click', addRow);
+            }
+
+            if (list) {
+                list.addEventListener('click', event => {
+                    const target = event.target;
+                    if (!(target instanceof HTMLElement) || !target.classList.contains('js-remove-tire-change')) {
+                        return;
+                    }
+
+                    const row = target.closest('.tire-change-row');
+                    row?.remove();
+                    reindexRows();
+                    updateEmptyState();
+                });
+            }
+
+            updateEmptyState();
         })();
     </script>
 }

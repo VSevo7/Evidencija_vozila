@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using EvidencijaVozila.Enums;
 
 namespace EvidencijaVozila.Models;
@@ -48,4 +48,5 @@ public class Vehicle
     public VehicleStatus Status { get; set; }
 
     public ICollection<VehicleOrder> Orders { get; set; } = new List<VehicleOrder>();
+    public ICollection<VehicleTireChange> TireChanges { get; set; } = new List<VehicleTireChange>();
 }

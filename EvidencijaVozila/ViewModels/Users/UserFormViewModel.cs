@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using EvidencijaVozila.Enums;
 
 namespace EvidencijaVozila.ViewModels.Users;
@@ -48,9 +48,6 @@ public class UserFormViewModel : IValidatableObject
     [Display(Name = "Naziv sektora")]
     public string? SectorName { get; set; }
 
-    [Display(Name = "Sektor službe")]
-    public string? ServiceSectorName { get; set; }
-
     [Display(Name = "Naziv službe")]
     public string? ServiceDepartmentName { get; set; }
 
@@ -70,11 +67,6 @@ public class UserFormViewModel : IValidatableObject
         if (AssignmentType == UserAssignmentType.Sektor && string.IsNullOrWhiteSpace(SectorName))
         {
             yield return new ValidationResult("Unesite naziv sektora.", [nameof(SectorName)]);
-        }
-
-        if (AssignmentType == UserAssignmentType.Sluzba && string.IsNullOrWhiteSpace(ServiceSectorName))
-        {
-            yield return new ValidationResult("Unesite sektor kojem služba pripada.", [nameof(ServiceSectorName)]);
         }
 
         if (AssignmentType == UserAssignmentType.Sluzba && string.IsNullOrWhiteSpace(ServiceDepartmentName))

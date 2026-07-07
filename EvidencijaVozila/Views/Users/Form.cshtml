@@ -1,4 +1,4 @@
-@model EvidencijaVozila.ViewModels.Users.UserFormViewModel
+﻿@model EvidencijaVozila.ViewModels.Users.UserFormViewModel
 @{
     ViewData["Title"] = Model.Id.HasValue ? "Uredi korisnika" : "Dodaj korisnika";
     var isSectorAssignment = Model.AssignmentType == UserAssignmentType.Sektor;
@@ -78,11 +78,6 @@
                     <input asp-for="SectorName" class="form-control" list="sector-suggestions" />
                     <span asp-validation-for="SectorName" class="text-danger small"></span>
                 </div>
-                <div class="col-md-6 js-service-sector-group" style="display:@(isSectorAssignment ? "none" : "block");">
-                    <label asp-for="ServiceSectorName" class="form-label"></label>
-                    <input asp-for="ServiceSectorName" class="form-control" list="sector-suggestions" />
-                    <span asp-validation-for="ServiceSectorName" class="text-danger small"></span>
-                </div>
                 <div class="col-md-6 js-service-group" style="display:@(isSectorAssignment ? "none" : "block");">
                     <label asp-for="ServiceDepartmentName" class="form-label"></label>
                     <input asp-for="ServiceDepartmentName" class="form-control" list="service-suggestions" />
@@ -118,10 +113,9 @@
             const assignmentSelect = document.querySelector('.js-assignment-type');
             const positionSelect = document.querySelector('.js-position-select');
             const sectorGroup = document.querySelector('.js-sector-group');
-            const serviceSectorGroup = document.querySelector('.js-service-sector-group');
             const serviceGroup = document.querySelector('.js-service-group');
 
-            if (!assignmentSelect || !positionSelect || !sectorGroup || !serviceSectorGroup || !serviceGroup) {
+            if (!assignmentSelect || !positionSelect || !sectorGroup || !serviceGroup) {
                 return;
             }
 
@@ -130,21 +124,15 @@
             const voditeljSluzbeValue = '@((int)UserPosition.VoditeljSluzbe)';
 
             const sectorInput = sectorGroup.querySelector('input');
-            const serviceSectorInput = serviceSectorGroup.querySelector('input');
             const serviceInput = serviceGroup.querySelector('input');
 
             const syncState = () => {
                 const isSector = assignmentSelect.value === sectorAssignmentValue;
 
                 sectorGroup.style.display = isSector ? 'block' : 'none';
-                serviceSectorGroup.style.display = isSector ? 'none' : 'block';
                 serviceGroup.style.display = isSector ? 'none' : 'block';
 
                 if (isSector) {
-                    if (serviceSectorInput) {
-                        serviceSectorInput.value = '';
-                    }
-
                     if (serviceInput) {
                         serviceInput.value = '';
                     }

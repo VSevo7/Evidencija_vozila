@@ -1,4 +1,4 @@
-using EvidencijaVozila.Enums;
+﻿using EvidencijaVozila.Enums;
 using EvidencijaVozila.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +12,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
     public DbSet<VehicleOrder> VehicleOrders => Set<VehicleOrder>();
+    public DbSet<VehicleTireChange> VehicleTireChanges => Set<VehicleTireChange>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,6 +29,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         modelBuilder.Entity<Vehicle>()
             .Property(x => x.PurchasePrice)
             .HasPrecision(12, 2);
+
+        modelBuilder.Entity<VehicleTireChange>()
+            .Property(x => x.TireType)
+            .HasMaxLength(30);
 
         modelBuilder.Entity<VehicleOrder>()
             .HasIndex(x => x.OrderNumber)
@@ -74,5 +79,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .WithMany(x => x.Orders)
             .HasForeignKey(x => x.OrganizationalUnitId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<VehicleTireChange>()
+            .HasOne(x => x.Vehicle)
+            .WithMany(x => x.TireChanges)
+            .HasForeignKey(x => x.VehicleId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

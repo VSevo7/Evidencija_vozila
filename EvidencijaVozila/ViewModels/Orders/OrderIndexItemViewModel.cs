@@ -1,4 +1,4 @@
-namespace EvidencijaVozila.ViewModels.Orders;
+﻿namespace EvidencijaVozila.ViewModels.Orders;
 
 public class OrderIndexItemViewModel
 {
@@ -29,6 +29,7 @@ public class OrderDetailsViewModel
     public bool IsCompleted { get; set; }
     public int MileageBefore { get; set; }
     public int? MileageAfter { get; set; }
+    public int? TravelledMileage => MileageAfter.HasValue ? MileageAfter.Value - MileageBefore : null;
     public string? Note { get; set; }
     public string Status { get; set; } = string.Empty;
     public string CreatedBy { get; set; } = string.Empty;

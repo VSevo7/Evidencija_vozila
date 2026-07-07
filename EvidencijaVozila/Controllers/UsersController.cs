@@ -1,4 +1,4 @@
-using EvidencijaVozila.Data;
+﻿using EvidencijaVozila.Data;
 using EvidencijaVozila.Enums;
 using EvidencijaVozila.Models;
 using EvidencijaVozila.ViewModels.Users;
@@ -74,8 +74,7 @@ public class UsersController(ApplicationDbContext context) : Controller
             return View("Form", model);
         }
 
-        model.SectorId = await ResolveSectorIdAsync(model);
-        model.ServiceDepartmentId = await ResolveServiceDepartmentIdAsync(model, model.SectorId);
+        await ResolveAssignmentAsync(model);
 
         if (!ModelState.IsValid || !model.SectorId.HasValue || (model.AssignmentType == UserAssignmentType.Sluzba && !model.ServiceDepartmentId.HasValue))
         {
@@ -139,7 +138,6 @@ public class UsersController(ApplicationDbContext context) : Controller
             SectorId = user.SectorId,
             ServiceDepartmentId = user.ServiceDepartmentId,
             SectorName = user.AssignmentType == UserAssignmentType.Sektor ? user.Sector?.Name : null,
-            ServiceSectorName = user.ServiceDepartment?.Sector?.Name ?? user.Sector?.Name,
             ServiceDepartmentName = user.ServiceDepartment?.Name,
             Position = user.Position
         };
@@ -188,8 +186,7 @@ public class UsersController(ApplicationDbContext context) : Controller
             return View("Form", model);
         }
 
-        model.SectorId = await ResolveSectorIdAsync(model);
-        model.ServiceDepartmentId = await ResolveServiceDepartmentIdAsync(model, model.SectorId);
+        await ResolveAssignmentAsync(model);
 
         if (!ModelState.IsValid || !model.SectorId.HasValue || (model.AssignmentType == UserAssignmentType.Sluzba && !model.ServiceDepartmentId.HasValue))
         {
@@ -261,35 +258,43 @@ public class UsersController(ApplicationDbContext context) : Controller
         model.SectorSuggestions = await context.Sectors
             .OrderBy(x => x.Name)
             .Select(x => x.Name)
+            .Distinct()
             .ToListAsync();
 
         model.ServiceDepartmentSuggestions = await context.ServiceDepartments
             .OrderBy(x => x.Name)
             .Select(x => x.Name)
+            .Distinct()
             .ToListAsync();
+    }
+
+    private async Task ResolveAssignmentAsync(UserFormViewModel model)
+    {
+        if (model.AssignmentType == UserAssignmentType.Sektor)
+        {
+            model.SectorId = await ResolveSectorIdAsync(model);
+            model.ServiceDepartmentId = null;
+            return;
+        }
+
+        var serviceDepartment = await FindExistingServiceDepartmentAsync(model);
+        model.ServiceDepartmentId = serviceDepartment?.Id;
+        model.SectorId = serviceDepartment?.SectorId;
     }
 
     private async Task<int?> ResolveSectorIdAsync(UserFormViewModel model)
     {
-        var fieldName = model.AssignmentType == UserAssignmentType.Sektor
-            ? nameof(model.SectorName)
-            : nameof(model.ServiceSectorName);
-
-        var sectorName = model.AssignmentType == UserAssignmentType.Sektor
-            ? model.SectorName
-            : model.ServiceSectorName;
-
-        if (string.IsNullOrWhiteSpace(sectorName))
+        if (string.IsNullOrWhiteSpace(model.SectorName))
         {
             return null;
         }
 
-        return await GetOrCreateSectorAsync(sectorName, model.OrganizationalUnitId, fieldName);
+        return await GetOrCreateSectorAsync(model.SectorName, model.OrganizationalUnitId, nameof(model.SectorName));
     }
 
-    private async Task<int?> ResolveServiceDepartmentIdAsync(UserFormViewModel model, int? sectorId)
+    private async Task<ServiceDepartment?> FindExistingServiceDepartmentAsync(UserFormViewModel model)
     {
-        if (model.AssignmentType != UserAssignmentType.Sluzba || !sectorId.HasValue)
+        if (string.IsNullOrWhiteSpace(model.ServiceDepartmentName))
         {
             return null;
         }
@@ -297,8 +302,10 @@ public class UsersController(ApplicationDbContext context) : Controller
         var serviceName = InputNormalizer.NormalizeRequired(model.ServiceDepartmentName);
         var normalizedName = NormalizeName(serviceName);
         var matchingServices = await context.ServiceDepartments
+            .Include(x => x.Sector)
             .Where(x =>
-                x.SectorId == sectorId.Value &&
+                x.Sector != null &&
+                x.Sector.OrganizationalUnitId == model.OrganizationalUnitId &&
                 x.Name.Trim().ToUpper() == normalizedName)
             .OrderBy(x => x.Id)
             .Take(2)
@@ -306,24 +313,17 @@ public class UsersController(ApplicationDbContext context) : Controller
 
         if (matchingServices.Count > 1)
         {
-            ModelState.AddModelError(nameof(model.ServiceDepartmentName), "Postoji više službi s istim nazivom u odabranom sektoru. Uredite organizaciju prije spremanja korisnika.");
+            ModelState.AddModelError(nameof(model.ServiceDepartmentName), "Postoji više službi s istim nazivom. Uredite organizaciju prije spremanja korisnika.");
             return null;
         }
 
-        if (matchingServices.Count == 1)
+        if (matchingServices.Count == 0)
         {
-            return matchingServices[0].Id;
+            ModelState.AddModelError(nameof(model.ServiceDepartmentName), "Služba nije pronađena. Prvo je dodajte kroz Organizacije.");
+            return null;
         }
 
-        var newService = new ServiceDepartment
-        {
-            Name = serviceName,
-            SectorId = sectorId.Value
-        };
-
-        context.ServiceDepartments.Add(newService);
-        await context.SaveChangesAsync();
-        return newService.Id;
+        return matchingServices[0];
     }
 
     private async Task<int?> GetOrCreateSectorAsync(string sectorName, int organizationalUnitId, string fieldName)

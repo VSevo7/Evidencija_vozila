@@ -1,4 +1,4 @@
-@model EvidencijaVozila.ViewModels.Orders.OrderDetailsViewModel
+﻿@model EvidencijaVozila.ViewModels.Orders.OrderDetailsViewModel
 @{
     ViewData["Title"] = "Detalji naloga";
 }
@@ -31,6 +31,7 @@
                     <dt class="col-sm-4">Službeni put</dt><dd class="col-sm-8">@(Model.IsBusinessTrip ? "Da" : "Ne")</dd>
                     <dt class="col-sm-4">Km prije</dt><dd class="col-sm-8">@Model.MileageBefore</dd>
                     <dt class="col-sm-4">Km poslije</dt><dd class="col-sm-8">@(Model.MileageAfter?.ToString() ?? "-")</dd>
+                    <dt class="col-sm-4">Prijeđeni kilometri</dt><dd class="col-sm-8">@(Model.TravelledMileage?.ToString() ?? "-")</dd>
                     <dt class="col-sm-4">Status</dt><dd class="col-sm-8"><span class="app-status-badge app-status-@ViewHelpers.BadgeClass(Model.Status)">@Model.Status</span></dd>
                     <dt class="col-sm-4">Kreirao</dt><dd class="col-sm-8">@Model.CreatedBy</dd>
                     <dt class="col-sm-4">Napomena</dt><dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Note) ? "-" : Model.Note)</dd>

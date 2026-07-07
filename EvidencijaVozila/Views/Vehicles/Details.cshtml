@@ -1,4 +1,4 @@
-@model EvidencijaVozila.ViewModels.Vehicles.VehicleDetailsViewModel
+﻿@model EvidencijaVozila.ViewModels.Vehicles.VehicleDetailsViewModel
 @{
     ViewData["Title"] = "Detalji vozila";
 }
@@ -47,10 +47,6 @@
                 <div class="vehicle-detail-value">@Model.CurrentTires</div>
             </div>
             <div class="col-md-4">
-                <div class="vehicle-detail-label">Datum izmjene guma</div>
-                <div class="vehicle-detail-value">@(string.IsNullOrWhiteSpace(Model.TireChangeNote) ? "-" : Model.TireChangeNote)</div>
-            </div>
-            <div class="col-md-4">
                 <div class="vehicle-detail-label">Trenutna kilometraža</div>
                 <div class="vehicle-detail-value">@Model.CurrentMileage km</div>
             </div>
@@ -64,9 +60,40 @@
                     <span class="app-status-badge app-status-@ViewHelpers.BadgeClass(Model.Status)">@Model.Status</span>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-8">
                 <div class="vehicle-detail-label">Aktivni nalog</div>
                 <div class="vehicle-detail-value">@(string.IsNullOrWhiteSpace(Model.ActiveOrderNumber) ? "Vozilo nije izdano" : Model.ActiveOrderNumber)</div>
+            </div>
+            <div class="col-12">
+                <div class="vehicle-detail-label mb-2">Evidencija izmjene guma</div>
+                @if (Model.TireChanges.Count == 0)
+                {
+                    <div class="vehicle-detail-value">Nema evidentiranih izmjena guma.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Datum izmjene</th>
+                                    <th>Tip gume</th>
+                                    <th>Stanje km</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var tireChange in Model.TireChanges)
+                                {
+                                    <tr>
+                                        <td>@tireChange.ChangedAt.ToString("dd.MM.yyyy")</td>
+                                        <td>@tireChange.TireType</td>
+                                        <td>@tireChange.MileageAtChange</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
             </div>
         </div>
     </div>
