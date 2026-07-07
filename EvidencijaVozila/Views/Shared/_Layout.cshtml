@@ -10,7 +10,7 @@
 </head>
 <body class="app-shell">
     <header class="mb-4">
-        <nav class="navbar app-navbar shadow-sm @(User.Identity?.IsAuthenticated == true ? "app-navbar-auth" : "app-navbar-guest")">
+        <nav class="navbar app-navbar shadow-sm @(User.Identity?.IsAuthenticated == true ? string.Empty : "app-navbar-guest")">
             <div class="container d-flex justify-content-between align-items-center">
                 <a class="navbar-brand fw-semibold @(User.Identity?.IsAuthenticated == true ? string.Empty : "mx-auto text-center")"
                    asp-controller="@(User.Identity?.IsAuthenticated == true ? "Dashboard" : "Account")"

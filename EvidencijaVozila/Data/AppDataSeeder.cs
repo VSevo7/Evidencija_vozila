@@ -47,31 +47,52 @@ public static class AppDataSeeder
             await context.SaveChangesAsync();
         }
 
-        if (await context.Users.AnyAsync())
+        var hasActiveAdministrator = await context.Users.AnyAsync(x =>
+            x.Role == UserRole.Administrator &&
+            x.Status == UserStatus.Aktivan);
+
+        if (hasActiveAdministrator)
         {
             return;
         }
 
         var passwordHasher = new PasswordHasher<AppUser>();
+        var admin = await context.Users.FirstOrDefaultAsync(x => x.Username == "admin");
 
-        var admin = new AppUser
+        if (admin is null)
         {
-            FirstName = "Admin",
-            LastName = "Sustava",
-            Username = "admin",
-            Email = "admin@organizacija.hr",
-            Role = UserRole.Administrator,
-            Status = UserStatus.Aktivan,
-            OrganizationalUnitId = unit.Id,
-            SectorId = adminSector.Id,
-            ServiceDepartmentId = null,
-            AssignmentType = UserAssignmentType.Sektor,
-            Position = UserPosition.VoditeljSektora
-        };
+            admin = new AppUser
+            {
+                FirstName = "Admin",
+                LastName = "Sustava",
+                Username = "admin",
+                Email = "admin@organizacija.hr",
+                Role = UserRole.Administrator,
+                Status = UserStatus.Aktivan,
+                OrganizationalUnitId = unit.Id,
+                SectorId = adminSector.Id,
+                ServiceDepartmentId = null,
+                AssignmentType = UserAssignmentType.Sektor,
+                Position = UserPosition.VoditeljSektora
+            };
 
-        admin.PasswordHash = passwordHasher.HashPassword(admin, "Admin123!");
+            admin.PasswordHash = passwordHasher.HashPassword(admin, "Admin123!");
+            context.Users.Add(admin);
+        }
+        else
+        {
+            admin.FirstName = "Admin";
+            admin.LastName = "Sustava";
+            admin.Email = "admin@organizacija.hr";
+            admin.Role = UserRole.Administrator;
+            admin.Status = UserStatus.Aktivan;
+            admin.OrganizationalUnitId = unit.Id;
+            admin.SectorId = adminSector.Id;
+            admin.ServiceDepartmentId = null;
+            admin.AssignmentType = UserAssignmentType.Sektor;
+            admin.Position = UserPosition.VoditeljSektora;
+        }
 
-        context.Users.Add(admin);
         await context.SaveChangesAsync();
     }
 }

@@ -33,6 +33,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasIndex(x => x.OrderNumber)
             .IsUnique();
 
+        modelBuilder.Entity<VehicleOrder>()
+            .HasIndex(x => x.VehicleId)
+            .HasDatabaseName("IX_VehicleOrders_ActiveVehicle")
+            .HasFilter($"[{nameof(VehicleOrder.Status)}] = {(int)OrderStatus.Aktivan}")
+            .IsUnique();
+
         modelBuilder.Entity<AppUser>()
             .HasOne(x => x.OrganizationalUnit)
             .WithMany(x => x.Users)
