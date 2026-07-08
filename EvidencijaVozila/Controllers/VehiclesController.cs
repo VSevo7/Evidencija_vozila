@@ -127,7 +127,6 @@ public class VehiclesController(ApplicationDbContext context) : Controller
             BrandModel = InputNormalizer.NormalizeRequired(model.BrandModel),
             VehicleType = model.VehicleType,
             CurrentTires = InputNormalizer.NormalizeRequired(model.CurrentTires),
-            TireChangeNote = null,
             PurchasePrice = decimal.Truncate(model.PurchasePrice),
             FuelType = model.FuelType,
             TransmissionType = model.TransmissionType,
@@ -226,7 +225,6 @@ public class VehiclesController(ApplicationDbContext context) : Controller
         vehicle.BrandModel = InputNormalizer.NormalizeRequired(model.BrandModel);
         vehicle.VehicleType = model.VehicleType;
         vehicle.CurrentTires = InputNormalizer.NormalizeRequired(model.CurrentTires);
-        vehicle.TireChangeNote = null;
         vehicle.PurchasePrice = decimal.Truncate(model.PurchasePrice);
         vehicle.FuelType = model.FuelType;
         vehicle.TransmissionType = model.TransmissionType;

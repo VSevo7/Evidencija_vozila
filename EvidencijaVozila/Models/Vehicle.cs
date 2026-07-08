@@ -23,10 +23,6 @@ public class Vehicle
     [Display(Name = "Trenutne gume")]
     public string CurrentTires { get; set; } = string.Empty;
 
-    [StringLength(100)]
-    [Display(Name = "Datum izmjene guma")]
-    public string? TireChangeNote { get; set; }
-
     [Range(0, 999999999)]
     [Display(Name = "Nabavna cijena")]
     public decimal PurchasePrice { get; set; }
